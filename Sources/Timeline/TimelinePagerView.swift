@@ -1,6 +1,9 @@
 import UIKit
 
 public protocol TimelinePagerViewDelegate: AnyObject {
+        // zoom height change to pinch gesture
+  func timelinePagerDidChangeHeightScaleFactor(timelinePager: TimelinePagerView)
+    
   func timelinePagerDidSelectEventView(_ eventView: EventView)
   func timelinePagerDidLongPressEventView(_ eventView: EventView)
   func timelinePager(timelinePager: TimelinePagerView, didTapTimelineAt date: Date)
@@ -12,6 +15,7 @@ public protocol TimelinePagerViewDelegate: AnyObject {
 
   // Editing
   func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor)
+    
 }
 
 public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScrollViewDelegate, DayViewStateUpdating, UIPageViewControllerDataSource, UIPageViewControllerDelegate, TimelineViewDelegate {
@@ -43,7 +47,43 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                                                   options: nil)
   private var style = TimelineStyle()
 
-  private lazy var panGestureRecoognizer = UIPanGestureRecognizer(target: self,
+    
+    
+  public var allowsZooming = true
+  private var _heightScaleFactor : CGFloat = 1.0;
+    public var heightScaleFactor: CGFloat {
+        get { return _heightScaleFactor }
+        set {
+            
+            var factor = newValue;
+            if (factor < 1.0) {
+                factor = 1.0
+            }
+            if (factor > 3.0) {
+                factor = 3.0
+            }
+            _heightScaleFactor = factor
+            
+            var zoomedStyle = TimelineStyle();
+            zoomedStyle.verticalDiff = (zoomedStyle.verticalDiff * heightScaleFactor)
+            
+            style = zoomedStyle;
+            
+                // mention the change to the delegate
+            delegate?.timelinePagerDidChangeHeightScaleFactor(timelinePager: self)
+            
+            updateStyle(style)
+            reloadData()
+            
+        }
+    }
+    
+  public var pinchGestureIsVertical = false
+  private lazy var pinchGestureRecognizer = UIPinchGestureRecognizer(target: self,
+                                                                   action: #selector(handlePinchGesture(_:)))
+    
+    
+  private lazy var panGestureRecognizer = UIPanGestureRecognizer(target: self,
                                                           action: #selector(handlePanGesture(_:)))
   
   public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
@@ -55,12 +95,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
   }
 
   public override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-    guard gestureRecognizer == panGestureRecoognizer else {
+    guard gestureRecognizer == panGestureRecognizer else {
       return super.gestureRecognizerShouldBegin(gestureRecognizer)
     }
     guard let pendingEvent = editedEventView else {return true}
     let eventFrame = pendingEvent.frame
-    let position = panGestureRecoognizer.location(in: self)
+    let position = panGestureRecognizer.location(in: self)
     let contains = eventFrame.contains(position)
     return contains
   }
@@ -99,8 +139,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     pagingViewController.dataSource = self
     pagingViewController.delegate = self
     addSubview(pagingViewController.view!)
-    addGestureRecognizer(panGestureRecoognizer)
-    panGestureRecoognizer.delegate = self
+    addGestureRecognizer(panGestureRecognizer)
+    panGestureRecognizer.delegate = self
+      
+        // pinch
+    addGestureRecognizer(pinchGestureRecognizer)
+    pinchGestureRecognizer.delegate = self
+      
   }
 
   public func updateStyle(_ newStyle: TimelineStyle) {
@@ -284,7 +329,96 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
       commitEditing()
     }
   }
-  
+    
+  @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
+      
+      if (allowsZooming == false){
+          return;
+      }
+      
+      if (sender.state == .began) {
+          
+              // THIS ONE IS GOOD
+              // figure out if mostly horizontal or vertical
+              // http://stackoverflow.com/questions/9064760/can-i-use-uipinchgesturerecognizers-to-distinguish-between-horizontal-and-vertic
+          
+          
+              // figure out if vertical
+          let touch0: CGPoint = sender.location(ofTouch: 0, in: self)
+          let touch1: CGPoint = sender.location(ofTouch: 1, in: self)
+          
+          let tangent : CGFloat = abs((touch1.y - touch0.y) / (touch1.x - touch0.x));
+          
+          pinchGestureIsVertical = true
+          
+          if (tangent <= 0.2679491924) {
+                  // 15 degrees
+                  // NSLog(@"Horizontal");
+              pinchGestureIsVertical = false
+              
+          }
+          
+          if (tangent >= 3.7320508076) {
+                  // 75 degrees
+                  // NSLog(@"Vertical");
+                  // do nothing and just default to vertical
+              
+          }
+          
+          
+          return;
+      }
+      
+      
+      
+      if (sender.state == .changed) {
+          
+          if (sender.numberOfTouches > 1) {
+              
+              if (pinchGestureIsVertical) {
+                  
+                  //print("Adjust column height in response to pinch gesture scale \(sender.scale)")
+                  
+                    // the value TimelineStyle().verticalDiff determines the row height
+                    // there is also a function in self 'updateStyle'
+                    // we can try to adjust the height with this function
+                    // we would need a way to save the height, so maybe have a delegate message that heightFactor was changed or something
+                  
+                  heightScaleFactor = heightScaleFactor * sender.scale;
+                  
+                  //print("heightScaleFactor is \(heightScaleFactor)")
+                  
+                    // reset it to 1.0 so that it linearly scales the heightScaleFactor
+                  sender.scale = 1.0;
+                  
+                  
+              } else {
+                  
+                      // maybe width should only be adjusted on .ended
+                      // need to try it out once we figure out how to adjust the layout elements
+                  //print("Adjust column width in response to pinch gesture")
+                  
+              }
+              
+              
+          }
+          
+          return;
+      }
+      
+      
+      if (sender.state == .ended) {
+          
+            // TODO
+            // tell the delegate that the heightScaleFactor has changed
+          
+          return;
+      }
+      
+      
+  }
+    
+    
   @objc func handleResizeHandlePanGesture(_ sender: UIPanGestureRecognizer) {
     if let pendingEvent = editedEventView {
       let newCoord = sender.translation(in: pendingEvent)

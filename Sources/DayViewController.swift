@@ -1,8 +1,8 @@
 import UIKit
 
-open class DayViewController: UIViewController, EventDataSource, DayViewDelegate {
-  public lazy var dayView: DayView = DayView()
-  public var dataSource: EventDataSource? {
+@objc open class DayViewController: UIViewController, EventDataSource, DayViewDelegate {
+  @objc public lazy var dayView: DayView = DayView()
+  @objc public var dataSource: EventDataSource? {
     get {
       dayView.dataSource
     }
@@ -11,7 +11,7 @@ open class DayViewController: UIViewController, EventDataSource, DayViewDelegate
     }
   }
 
-  public var delegate: DayViewDelegate? {
+  @objc public var delegate: DayViewDelegate? {
     get {
       dayView.delegate
     }
@@ -67,11 +67,11 @@ open class DayViewController: UIViewController, EventDataSource, DayViewDelegate
   
   // MARK: - CalendarKit API
   
-  open func move(to date: Date) {
+  @objc open func move(to date: Date) {
     dayView.move(to: date)
   }
 
-  open func reloadData() {
+  @objc open func reloadData() {
     dayView.reloadData()
   }
 
@@ -85,6 +85,10 @@ open class DayViewController: UIViewController, EventDataSource, DayViewDelegate
 
   // MARK: - DayViewDelegate
 
+    
+  open func dayViewDidChangeHeightScaleFactor(dayView: DayView) {
+  }
+    
   open func dayViewDidSelectEventView(_ eventView: EventView) {
   }
 
@@ -114,15 +118,15 @@ open class DayViewController: UIViewController, EventDataSource, DayViewDelegate
   
   // MARK: - Editing
   
-  open func create(event: EventDescriptor, animated: Bool = false) {
+ @objc open func create(event: EventDescriptor, animated: Bool = false) {
     dayView.create(event: event, animated: animated)
   }
 
-  open func beginEditing(event: EventDescriptor, animated: Bool = false) {
+  @objc open func beginEditing(event: EventDescriptor, animated: Bool = false) {
     dayView.beginEditing(event: event, animated: animated)
   }
   
-  open func endEventEditing() {
+  @objc open func endEventEditing() {
     dayView.endEventEditing()
   }
 }

@@ -1,13 +1,29 @@
 import UIKit
 
-open class EventView: UIView {
-  public var descriptor: EventDescriptor?
+@objc open class EventView: UIView {
+  @objc public var descriptor: EventDescriptor?
   public var color = SystemColors.label
+  public var marginColor : UIColor?
 
   public var contentHeight: CGFloat {
     textView.frame.height
   }
 
+    public private(set) lazy var imageView: UIImageView = {
+        let view = UIImageView()
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .clear
+        
+        var badge : UIImage?
+        if #available(iOS 13.0, *) {
+            badge = UIImage.init(systemName: "sun.max")
+        }
+        view.tintColor = UIColor.systemGreen;
+        view.image = badge;
+        
+        return view
+    }()
+    
   public private(set) lazy var textView: UITextView = {
     let view = UITextView()
     view.isUserInteractionEnabled = false
@@ -34,6 +50,7 @@ open class EventView: UIView {
     clipsToBounds = false
     color = tintColor
     addSubview(textView)
+      addSubview(imageView)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
       handle.tag = idx
@@ -49,12 +66,46 @@ open class EventView: UIView {
       textView.textColor = event.textColor
       textView.font = event.font
     }
-    if let lineBreakMode = event.lineBreakMode {
+      
+    if let lineBreakModeValue = event.lineBreakModeValue {
+        
+        var lineBreakMode: NSLineBreakMode = .byTruncatingTail
+        
+        switch lineBreakModeValue.intValue {
+            
+        case 0:
+            lineBreakMode = .byWordWrapping
+            
+        case 1:
+            lineBreakMode = .byCharWrapping
+            
+        case 2:
+            lineBreakMode = .byClipping
+            
+        case 3:
+            lineBreakMode = .byTruncatingHead
+            
+        case 4:
+            lineBreakMode = .byTruncatingTail
+            
+        case 5:
+            lineBreakMode = .byTruncatingMiddle
+            
+        default:
+            lineBreakMode = .byTruncatingTail
+            
+        }
+        
       textView.textContainer.lineBreakMode = lineBreakMode
+        
     }
+      
     descriptor = event
     backgroundColor = event.backgroundColor
     color = event.color
+    marginColor = event.marginColor;
+    imageView.image = event.cornerImage;
+    imageView.tintColor = event.cornerImageTint;
     eventResizeHandles.forEach{
       $0.borderColor = event.color
       $0.isHidden = event.editedEvent == nil
@@ -108,6 +159,12 @@ open class EventView: UIView {
     let leftToRight = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .leftToRight
     let x: CGFloat = leftToRight ? 0 : frame.width - 1  // 1 is the line width
     let y: CGFloat = 0
+      
+        // is the stroke on the left side of the eventView
+        // maybe have a variable for the color instead
+      
+    context.setStrokeColor(marginColor?.cgColor ?? color.cgColor)
+
     context.beginPath()
     context.move(to: CGPoint(x: x, y: y))
     context.addLine(to: CGPoint(x: x, y: (bounds).height))
@@ -132,6 +189,57 @@ open class EventView: UIView {
       textFrame.size.height += frame.minY;
       textView.frame = textFrame;
     }
+      
+      
+      let badgeWidth = 24.0;
+      let badgeInset = 4.0;
+      
+      let hasBadgeArea = (textView.frame.size.height >= (badgeWidth + badgeInset * 2)) && ((textView.frame.size.width * 0.5) >= (badgeWidth + badgeInset * 2))
+      
+      if ((imageView.image != nil) && (hasBadgeArea == true)){
+          
+          
+          let textFrame : CGRect = textView.frame
+          
+              // should account for text Direction
+              // if left to right, then inset the width
+              // if right to left, then inset the origin
+              
+          if UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft {
+              
+              let insetFrame : CGRect = CGRect(x: textFrame.origin.x + badgeWidth,
+                                               y: textFrame.origin.y,
+                                               width: textFrame.size.width - badgeWidth,
+                                               height: textFrame.size.height)
+              
+              let imageFrame = CGRect(x: textFrame.origin.x,
+                                      y: textFrame.origin.y + badgeInset,
+                                      width: badgeWidth - badgeInset * 2,
+                                      height: badgeWidth - badgeInset * 2)
+              
+              textView.frame = insetFrame;
+              imageView.frame = imageFrame;
+              
+          } else {
+              
+              let insetFrame : CGRect = CGRect(x: textFrame.origin.x,
+                                               y: textFrame.origin.y,
+                                               width: textFrame.size.width - badgeWidth,
+                                               height: textFrame.size.height)
+              
+              let imageFrame = CGRect(x: insetFrame.origin.x +
+                                      insetFrame.size.width +
+                                      badgeInset,
+                                      y: textFrame.origin.y + badgeInset,
+                                      width: badgeWidth - badgeInset * 2,
+                                      height: badgeWidth - badgeInset * 2)
+              
+              textView.frame = insetFrame;
+              imageView.frame = imageFrame;
+          }
+          
+      }
+      
     let first = eventResizeHandles.first
     let last = eventResizeHandles.last
     let radius: CGFloat = 40

@@ -1,16 +1,24 @@
 import UIKit
 
-public final class Event: EventDescriptor {
+@objc public final class Event: NSObject, EventDescriptor {
   public var dateInterval = DateInterval()
   public var isAllDay = false
   public var text = ""
   public var attributedText: NSAttributedString?
-  public var lineBreakMode: NSLineBreakMode?
+    //public var lineBreakMode: NSLineBreakMode?
+  public var lineBreakModeValue: NSNumber?
+
   public var color = SystemColors.systemBlue {
     didSet {
       updateColors()
     }
   }
+    
+  public var marginColor: UIColor?
+    
+  public var cornerImage: UIImage?
+  public var cornerImageTint: UIColor?
+
   public var backgroundColor = SystemColors.systemBlue.withAlphaComponent(0.3)
   public var textColor = SystemColors.label
   public var font = UIFont.boldSystemFont(ofSize: 12)
@@ -21,7 +29,7 @@ public final class Event: EventDescriptor {
     }
   }
 
-  public init() {}
+    public override init() {}
 
   public func makeEditable() -> Event {
     let cloned = Event()
@@ -29,7 +37,9 @@ public final class Event: EventDescriptor {
     cloned.isAllDay = isAllDay
     cloned.text = text
     cloned.attributedText = attributedText
-    cloned.lineBreakMode = lineBreakMode
+    //cloned.lineBreakMode = lineBreakMode
+    cloned.lineBreakModeValue = lineBreakModeValue
+
     cloned.color = color
     cloned.backgroundColor = backgroundColor
     cloned.textColor = textColor
