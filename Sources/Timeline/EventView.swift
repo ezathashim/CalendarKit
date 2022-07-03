@@ -191,12 +191,17 @@ import UIKit
     }
       
       
-      let badgeWidth = 24.0;
-      let badgeInset = 4.0;
+      let badgeWidth = 32.0;
+      let badgeInset = 6.0;
       
-      let hasBadgeArea = (textView.frame.size.height >= (badgeWidth + badgeInset * 2)) && ((textView.frame.size.width * 0.5) >= (badgeWidth + badgeInset * 2))
+      let badgeTotalWidth = (badgeWidth)
+      let availableBadgeWidth = (textView.frame.size.height >= badgeTotalWidth)
+      let availableBadgeHeight = ((textView.frame.size.width * 0.5) >= badgeTotalWidth)
+      let availableBadgeArea = ((availableBadgeWidth == true) && (availableBadgeHeight == true))
       
-      if ((imageView.image != nil) && (hasBadgeArea == true)){
+      imageView.isHidden = ((imageView.image == nil) || (availableBadgeArea == false));
+      
+      if (imageView.isHidden == false){
           
           
           let textFrame : CGRect = textView.frame

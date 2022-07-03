@@ -46,8 +46,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                                                   navigationOrientation: .horizontal,
                                                   options: nil)
   private var style = TimelineStyle()
-
-    
     
   public var allowsZooming = true
   private var _heightScaleFactor : CGFloat = 1.0;
@@ -55,7 +53,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         get { return _heightScaleFactor }
         set {
             
-            var factor = newValue;
+            var factor = newValue
             if (factor < 1.0) {
                 factor = 1.0
             }
@@ -150,6 +148,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
 
   public func updateStyle(_ newStyle: TimelineStyle) {
     style = newStyle
+    style.minimumEventDurationInMinutesWhileEditing = 15;
     pagingViewController.viewControllers?.forEach({ (timelineContainer) in
       if let controller = timelineContainer as? TimelineContainerController {
         self.updateStyleOfTimelineContainer(controller: controller)
