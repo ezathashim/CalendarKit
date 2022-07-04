@@ -11,6 +11,7 @@ import UIKit
   func dayView(dayView: DayView, willMoveTo date: Date)
   func dayView(dayView: DayView, didMoveTo  date: Date)
   func dayView(dayView: DayView, didUpdate event: EventDescriptor)
+  func openIntervalForDate(_ date: Date) -> NSDateInterval
 }
 
 public class DayView: UIView, TimelinePagerViewDelegate {
@@ -221,4 +222,15 @@ public class DayView: UIView, TimelinePagerViewDelegate {
   public func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor) {
     delegate?.dayView(dayView: self, didUpdate: event)
   }
+    
+  public func openIntervalForDate(_ date: Date) -> NSDateInterval {
+        
+      let startOfToday = NSCalendar.current.startOfDay(for: date)
+      let endOfToday = Date(timeInterval: 86399, since: startOfToday)
+        
+      let allDayInterval = NSDateInterval.init(start: startOfToday, end: endOfToday)
+        
+      return delegate?.openIntervalForDate( date) ?? allDayInterval
+    }
+    
 }

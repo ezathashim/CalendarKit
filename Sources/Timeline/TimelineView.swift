@@ -5,6 +5,7 @@ public protocol TimelineViewDelegate: AnyObject {
   func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date)
   func timelineView(_ timelineView: TimelineView, didTap event: EventView)
   func timelineView(_ timelineView: TimelineView, didLongPress event: EventView)
+  func openIntervalForDate(_ date: Date) -> NSDateInterval
 }
 
 public final class TimelineView: UIView {
@@ -190,7 +191,104 @@ public final class TimelineView: UIView {
       delegate?.timelineView(self, didTapAt: yToDate(pressedLocation.y))
     }
   }
-  
+    
+    
+    private func drawClosedPattern(context: CGContext, in drawRect: CGRect)  {
+        
+        let closedColor = style.separatorColor.withAlphaComponent(0.2)
+        
+            // left to right
+            // inset width
+        var eventRect = drawRect;
+        if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
+            
+                // right to left
+                // inset width by 53
+            eventRect = CGRect(x: drawRect.minX,
+                               y: drawRect.minY,
+                               width: (drawRect.width - 53),
+                               height: drawRect.height);
+            
+        } else {
+            
+                // left to right
+                // push x by 53
+            eventRect = CGRect(x: (drawRect.minX + 53),
+                               y: drawRect.minY,
+                               width: drawRect.width,
+                               height: drawRect.height);
+            
+        }
+        
+            // find the closed areas
+        let closedStartInterval = closedStartInterval()
+        
+        let beginStart = dateToY(closedStartInterval.startDate);
+        let endStart = dateToY(closedStartInterval.endDate);
+        
+        let closedStartRect = CGRect(x: eventRect.minX,
+                                     y: beginStart,
+                                     width: eventRect.width,
+                                     height: (endStart - beginStart));
+        
+        let closedStart = eventRect.intersection(closedStartRect)
+        if (closedStart.isNull == false){
+            
+            context.interpolationQuality = .none
+            context.saveGState()
+            context.setFillColor(closedColor.cgColor)
+            context.fill(closedStart)
+            context.restoreGState()
+            
+        }
+        
+        let closedEndInterval = closedEndInterval()
+        
+        let beginEnd = dateToY(closedEndInterval.startDate);
+        let endEnd = dateToY(closedEndInterval.endDate);
+        
+        let closedEndRect = CGRect(x: eventRect.minX,
+                                   y: beginEnd,
+                                   width: eventRect.width,
+                                   height: (endEnd - beginEnd));
+        
+        let closedEnd = eventRect.intersection(closedEndRect)
+        if (closedEnd.isNull == false){
+
+            context.interpolationQuality = .none
+            context.saveGState()
+            context.setFillColor(closedColor.cgColor)
+            context.fill(closedEnd)
+            context.restoreGState()
+        }
+        
+    }
+    
+  private func closedStartInterval() -> NSDateInterval {
+      
+      let startOfToday = NSCalendar.current.startOfDay(for: date)
+      let endOfToday = Date(timeInterval: 86399, since: startOfToday)
+      
+      let openInterval = delegate?.openIntervalForDate(date) ??
+          NSDateInterval.init(start: startOfToday, end: endOfToday)
+      
+      
+      return NSDateInterval.init(start: startOfToday, end: openInterval.startDate)
+  }
+    
+  private func closedEndInterval() -> NSDateInterval {
+        
+      let startOfToday = NSCalendar.current.startOfDay(for: date)
+      let endOfToday = Date(timeInterval: 86399, since: startOfToday)
+        
+      let openInterval = delegate?.openIntervalForDate(date) ??
+        NSDateInterval.init(start: startOfToday, end: endOfToday)
+        
+        
+      return NSDateInterval.init(start: openInterval.endDate, end: endOfToday)
+  }
+    
+    
   private func findEventView(at point: CGPoint) -> EventView? {
     for eventView in allDayView.eventViews {
       let frame = eventView.convert(eventView.bounds, to: self)
@@ -247,12 +345,18 @@ public final class TimelineView: UIView {
   }
   
   // MARK: - Background Pattern
+    
+
 
   public var accentedDate: Date?
 
   override public func draw(_ rect: CGRect) {
     super.draw(rect)
 
+        // draw closed indicator
+    drawClosedPattern(context: UIGraphicsGetCurrentContext()!, in: rect)
+      
+      
     var hourToRemoveIndex = -1
 
     var accentedHour = -1

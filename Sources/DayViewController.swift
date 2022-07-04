@@ -115,6 +115,16 @@ import UIKit
 
   open func dayView(dayView: DayView, didUpdate event: EventDescriptor) {
   }
+    
+  open func openIntervalForDate(_ date: Date) -> NSDateInterval {
+        
+      let startOfToday = NSCalendar.current.startOfDay(for: date)
+      let endOfToday = Date(timeInterval: 86399, since: startOfToday)
+        
+      let allDayInterval = NSDateInterval.init(start: startOfToday, end: endOfToday)
+        
+      return delegate?.openIntervalForDate( date) ?? allDayInterval
+  }
   
   // MARK: - Editing
   
@@ -129,4 +139,5 @@ import UIKit
   @objc open func endEventEditing() {
     dayView.endEventEditing()
   }
+    
 }

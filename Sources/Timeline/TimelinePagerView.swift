@@ -16,9 +16,13 @@ public protocol TimelinePagerViewDelegate: AnyObject {
   // Editing
   func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor)
     
+    //TimelineInfo
+   func openIntervalForDate(_ date: Date) -> NSDateInterval
+    
 }
 
 public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScrollViewDelegate, DayViewStateUpdating, UIPageViewControllerDataSource, UIPageViewControllerDelegate, TimelineViewDelegate {
+    
 
   public weak var dataSource: EventDataSource?
   public weak var delegate: TimelinePagerViewDelegate?
@@ -655,4 +659,14 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
   public func timelineView(_ timelineView: TimelineView, didLongPress event: EventView) {
     delegate?.timelinePagerDidLongPressEventView(event)
   }
+    
+   public func openIntervalForDate(_ date: Date) -> NSDateInterval {
+       
+       let startOfToday = NSCalendar.current.startOfDay(for: date)
+       let endOfToday = Date(timeInterval: 86399, since: startOfToday)
+       
+       let allDayInterval = NSDateInterval.init(start: startOfToday, end: endOfToday)
+              
+       return delegate?.openIntervalForDate( date) ?? allDayInterval
+   }
 }
