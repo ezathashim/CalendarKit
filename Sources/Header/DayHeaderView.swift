@@ -93,14 +93,17 @@ public final class DayHeaderView: UIView, DaySelectorDelegate, DayViewStateUpdat
     calendar.component(component, from: date)
   }
   
-  public func updateStyle(_ newStyle: DayHeaderStyle) {
-    style = newStyle
-    daySymbolsView.updateStyle(style.daySymbols)
-    swipeLabelView.updateStyle(style.swipeLabel)
-    (pagingViewController.viewControllers as? [DaySelectorController])?.forEach{$0.updateStyle(newStyle.daySelector)}
-    backgroundColor = style.backgroundColor
-    separator.backgroundColor = style.separatorColor
-  }
+    public func updateStyle(_ newStyle: DayHeaderStyle) {
+        
+        DispatchQueue.main.async {
+            self.style = newStyle
+            self.daySymbolsView.updateStyle(self.style.daySymbols)
+            self.swipeLabelView.updateStyle(self.style.swipeLabel)
+            (self.pagingViewController.viewControllers as? [DaySelectorController])?.forEach{$0.updateStyle(newStyle.daySelector)}
+            self.backgroundColor = self.style.backgroundColor
+            self.separator.backgroundColor = self.style.separatorColor
+        }
+    }
 
   override public func layoutSubviews() {
     super.layoutSubviews()

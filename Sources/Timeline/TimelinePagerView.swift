@@ -61,8 +61,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             if (factor < 1.0) {
                 factor = 1.0
             }
-            if (factor > 3.0) {
-                factor = 3.0
+            if (factor > 6.0) {
+                factor = 6.0
             }
             _heightScaleFactor = factor
             
@@ -151,14 +151,17 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
   }
 
   public func updateStyle(_ newStyle: TimelineStyle) {
-    style = newStyle
-    style.minimumEventDurationInMinutesWhileEditing = 15;
-    pagingViewController.viewControllers?.forEach({ (timelineContainer) in
-      if let controller = timelineContainer as? TimelineContainerController {
-        self.updateStyleOfTimelineContainer(controller: controller)
+      
+      DispatchQueue.main.async {
+          self.style = newStyle
+          self.style.minimumEventDurationInMinutesWhileEditing = 15;
+          self.pagingViewController.viewControllers?.forEach({ (timelineContainer) in
+              if let controller = timelineContainer as? TimelineContainerController {
+                  self.updateStyleOfTimelineContainer(controller: controller)
+              }
+          })
+          self.pagingViewController.view.backgroundColor = self.style.backgroundColor
       }
-    })
-    pagingViewController.view.backgroundColor = style.backgroundColor
   }
 
   private func updateStyleOfTimelineContainer(controller: TimelineContainerController) {
@@ -222,13 +225,15 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
   }
 
-  public func reloadData() {
-    pagingViewController.children.forEach({ (controller) in
-      if let controller = controller as? TimelineContainerController {
-        self.updateTimeline(controller.timeline)
-      }
-    })
-  }
+    public func reloadData() {
+        DispatchQueue.main.async {
+            self.pagingViewController.children.forEach({ (controller) in
+                if let controller = controller as? TimelineContainerController {
+                    self.updateTimeline(controller.timeline)
+                }
+            })
+        }
+    }
 
   override public func layoutSubviews() {
     super.layoutSubviews()
