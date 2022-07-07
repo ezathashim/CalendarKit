@@ -43,7 +43,7 @@ public class DayView: UIView, TimelinePagerViewDelegate {
   private static let headerVisibleHeight: CGFloat = 88
   public var headerHeight: CGFloat = headerVisibleHeight
 
-  public var autoScrollToFirstEvent: Bool {
+  @objc public var autoScrollToFirstEvent: Bool {
     get {
       timelinePagerView.autoScrollToFirstEvent
     }
@@ -148,7 +148,7 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     timelinePagerView.scrollTo(hour24: hour24, animated: animated)
   }
 
-  public func scrollToFirstEventIfNeeded(animated: Bool = true) {
+  @objc public func scrollToFirstEventIfNeeded(animated: Bool = true) {
     timelinePagerView.scrollToFirstEventIfNeeded(animated: animated)
   }
 

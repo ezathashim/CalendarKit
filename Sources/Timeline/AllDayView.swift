@@ -150,7 +150,27 @@ public final class AllDayView: UIView {
       // create event
       let eventView = EventView(frame: CGRect.zero)
       eventView.updateWithDescriptor(event: anEventDescriptor)
-      eventView.heightAnchor.constraint(equalToConstant: allDayEventHeight).isActive = true
+        
+        
+        var eventHeight = allDayEventHeight;
+        
+        if (self.events.count == 1){
+            let textComponents = anEventDescriptor.text.components(separatedBy: "\n")
+            if (textComponents.count > 1){
+                eventHeight = (allDayEventHeight * 2)
+            }
+            
+            let attText = anEventDescriptor.attributedText;
+            if (attText != nil){
+                let textComponents = attText!.string.components(separatedBy: "\n")
+                if (textComponents.count > 1){
+                    eventHeight = (allDayEventHeight * 2)
+                }
+            }
+            
+        }
+        
+      eventView.heightAnchor.constraint(equalToConstant: eventHeight).isActive = true
       
       // create horz stack view if index % 2 == 0
       if index % 2 == 0 {

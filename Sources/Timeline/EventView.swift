@@ -15,9 +15,7 @@ import UIKit
         view.backgroundColor = .clear
         
         var badge : UIImage?
-        if #available(iOS 13.0, *) {
-            badge = UIImage.init(systemName: "sun.max")
-        }
+        
         view.tintColor = UIColor.systemGreen;
         view.image = badge;
         
