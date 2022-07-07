@@ -168,6 +168,67 @@ import UIKit
     context.addLine(to: CGPoint(x: x, y: (bounds).height))
     context.strokePath()
     context.restoreGState()
+      
+      
+          // status string
+      
+      let statusPending = descriptor?.statusAttributedText
+      let statusBackgroundColor = descriptor?.statusBackgroundColor
+      
+      
+      if ((statusPending != nil) && (statusBackgroundColor != nil)) {
+          
+              // draw over everything
+          
+          var statusRect = rect.insetBy(dx: 6, dy: 6)
+          
+          let pendingSize = CGSize(width:  statusRect.size.width, height: CGFloat.greatestFiniteMagnitude)
+          let pendingRect = statusPending!.boundingRect(with: pendingSize,
+                                                        options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                        context: nil)
+          
+          
+          let width = fminf(Float(statusRect.size.width), Float(pendingRect.size.width));
+          let height = fminf(Float(statusRect.size.height), Float(pendingRect.size.height));
+          
+          statusRect.size.width = CGFloat(width)
+          statusRect.size.height = CGFloat(height)
+          
+              // adjust the origin to center the pill
+          statusRect.origin.x = (rect.size.width - statusRect.size.width)/2;
+          
+          
+          
+          let alpha = 1.0
+          
+          let statusColor = statusBackgroundColor!.withAlphaComponent(alpha)
+          
+          
+          
+              // draw a pill behind the text
+          let pillRect = statusRect.insetBy(dx: -3, dy: -3)
+          let circlePath = UIBezierPath(roundedRect: pillRect,
+                                        cornerRadius: pillRect.size.height/2)
+          
+          
+          context.saveGState()
+          
+          context.setStrokeColor(UIColor.white.cgColor)
+          context.setFillColor(statusColor.cgColor)
+          
+          circlePath.stroke()
+          circlePath.fill()
+          
+          
+          statusPending!.draw(with: statusRect,
+                              options: [NSStringDrawingOptions.truncatesLastVisibleLine,
+                                        NSStringDrawingOptions.usesLineFragmentOrigin],
+                              context: nil)
+          
+          context.restoreGState()
+          
+      }
+      
   }
 
   private var drawsShadow = false

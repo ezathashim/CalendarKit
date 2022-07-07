@@ -18,6 +18,9 @@ import UIKit
     
   public var cornerImage: UIImage?
   public var cornerImageTint: UIColor?
+    
+  public var statusAttributedText: NSAttributedString?
+  public var statusBackgroundColor: UIColor?
 
   public var backgroundColor = SystemColors.systemBlue.withAlphaComponent(0.3)
   public var textColor = SystemColors.label
