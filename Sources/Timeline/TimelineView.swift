@@ -479,6 +479,7 @@ public final class TimelineView: UIView {
     layoutEvents()
     layoutNowLine()
     layoutAllDayEvents()
+    setNeedsDisplay()
   }
 
   private func layoutNowLine() {

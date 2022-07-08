@@ -144,7 +144,7 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     timelinePagerView.timelinePanGestureRequire(toFail: gesture)
   }
 
-  public func scrollTo(hour24: Float, animated: Bool = true) {
+  @objc public func scrollTo(hour24: Float, animated: Bool = true) {
     timelinePagerView.scrollTo(hour24: hour24, animated: animated)
   }
 
