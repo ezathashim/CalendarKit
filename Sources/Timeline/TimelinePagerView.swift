@@ -52,17 +52,17 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     private var style = TimelineStyle()
     
     public var allowsZooming = true
-    private var _heightScaleFactor : CGFloat = 1.0;
+    private var _heightScaleFactor : CGFloat = 2.0;
     public var heightScaleFactor: CGFloat {
         get { return _heightScaleFactor }
         set {
             
             var factor = newValue
-            if (factor < 1.0) {
-                factor = 1.0
+            if (factor < 2.0) {
+                factor = 2.0
             }
-            if (factor > 6.0) {
-                factor = 6.0
+            if (factor > 10.0) {
+                factor = 10.0
             }
             _heightScaleFactor = factor
             
