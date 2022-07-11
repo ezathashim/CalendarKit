@@ -106,6 +106,22 @@ public final class TimelineView: UIView {
         return array
     }
     
+    public func visibleInterval() -> DateInterval? {
+        
+        guard let enclosingView = superview else {return nil}
+        
+        let enclosingBounds = enclosingView.convert(enclosingView.bounds, to: self)
+        let visibleRect = self.bounds.intersection(enclosingBounds)
+        
+        let startDate = yToDate(visibleRect.origin.y)
+        let endDate = yToDate(visibleRect.origin.y + visibleRect.size.height)
+        
+        let interval = DateInterval(start: startDate, end: endDate)
+        
+        return interval
+    }
+    
+    
     
     private lazy var nowLine: CurrentTimeIndicator = CurrentTimeIndicator()
     

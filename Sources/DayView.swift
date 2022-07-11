@@ -165,6 +165,10 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         return timelinePagerView.visibleDescriptors(heightFraction: heightFraction)
     }
     
+    @objc public func visibleInterval() -> DateInterval? {
+        return timelinePagerView.visibleInterval()
+    }
+    
     @objc public func scrollTo(event: EventDescriptor?, animated: Bool) {
         timelinePagerView.scrollTo(event: event, animated: animated)
     }

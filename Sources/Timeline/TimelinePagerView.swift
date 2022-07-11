@@ -66,11 +66,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
             _heightScaleFactor = factor
             
-            var zoomedStyle = TimelineStyle();
-            zoomedStyle.verticalDiff = (zoomedStyle.verticalDiff * heightScaleFactor)
-            
-            style = zoomedStyle;
-            
                 // mention the change to the delegate
             delegate?.timelinePagerDidChangeHeightScaleFactor(timelinePager: self)
             
@@ -167,7 +162,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     private func updateStyleOfTimelineContainer(controller: TimelineContainerController) {
         let container = controller.container
         let timeline = controller.timeline
-        timeline.updateStyle(style)
+        var zoomedStyle = TimelineStyle();
+        zoomedStyle.verticalDiff = (style.verticalDiff * heightScaleFactor)
+        timeline.updateStyle(zoomedStyle)
         container.backgroundColor = style.backgroundColor
     }
     
@@ -269,6 +266,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     public func visibleDescriptors(heightFraction: CGFloat = 1.0) -> [EventDescriptor]? {
         if let controller = currentTimeline {
             return controller.container.timeline.visibleDescriptors(heightFraction: heightFraction)
+        }
+        return nil
+    }
+    
+    public func visibleInterval() -> DateInterval? {
+        if let controller = currentTimeline {
+            return controller.container.timeline.visibleInterval()
         }
         return nil
     }
@@ -385,8 +389,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         if (sender.state == .began) {
             
-                // THIS ONE IS GOOD
-                // figure out if mostly horizontal or vertical
+                // determine if mostly horizontal or vertical
                 // http://stackoverflow.com/questions/9064760/can-i-use-uipinchgesturerecognizers-to-distinguish-between-horizontal-and-vertic
             
             
@@ -427,11 +430,26 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                         //print("Adjust column height in response to pinch gesture scale \(sender.scale)")
                     
                         // the value TimelineStyle().verticalDiff determines the row height
-                        // there is also a function in self 'updateStyle'
-                        // we can try to adjust the height with this function
-                        // we would need a way to save the height, so maybe have a delegate message that heightFactor was changed or something
+                        // self 'updateStyle' calls 'updateStyleOfTimelineContainer' where the height is determined
+                        // have a delegate message that heightFactor was changed to be able to save to user defaults
                     
                     heightScaleFactor = heightScaleFactor * sender.scale;
+                    
+                        // need to scroll while pinching
+                    guard let container = currentTimeline?.container else {return}
+                    let bounds = container.bounds
+                        // we have increased the height by sender.scale
+                        // the bounds y will decrease by 0.5 of this height change
+                        // if < 0, then zero
+                    let scaledHeight = bounds.size.height * sender.scale;
+                    let heightDiff = (scaledHeight - bounds.size.height)
+                    var yChange = bounds.origin.y - (heightDiff / 16)
+                    if (yChange < 0){
+                        yChange = 0
+                    }
+                    var scaledBounds = bounds
+                    scaledBounds.origin.y = yChange
+                    container.bounds = scaledBounds
                     
                         //print("heightScaleFactor is \(heightScaleFactor)")
                     
