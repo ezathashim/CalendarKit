@@ -436,14 +436,18 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     heightScaleFactor = heightScaleFactor * sender.scale;
                     
                         // need to scroll while pinching
-                    guard let container = currentTimeline?.container else {return}
+                    guard let container = currentTimeline?.container else {
+                        sender.scale = 1.0;
+                        return
+                    }
+                    
                     let bounds = container.bounds
                         // we have increased the height by sender.scale
                         // the bounds y will decrease by 0.5 of this height change
                         // if < 0, then zero
                     let scaledHeight = bounds.size.height * sender.scale;
                     let heightDiff = (scaledHeight - bounds.size.height)
-                    var yChange = bounds.origin.y - (heightDiff / 16)
+                    var yChange = bounds.origin.y - (heightDiff / 2)
                     if (yChange < 0){
                         yChange = 0
                     }
