@@ -427,13 +427,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
                 if (pinchGestureIsVertical) {
                     
-                        //print("Adjust column height in response to pinch gesture scale \(sender.scale)")
                     
-                        // the value TimelineStyle().verticalDiff determines the row height
-                        // self 'updateStyle' calls 'updateStyleOfTimelineContainer' where the height is determined
-                        // have a delegate message that heightFactor was changed to be able to save to user defaults
+                    let currentTimelineHeight = 24 * style.verticalDiff * heightScaleFactor;
                     
                     heightScaleFactor = heightScaleFactor * sender.scale;
+                    
+                    let zoomedTimelineHeight = 24 * style.verticalDiff * heightScaleFactor;
+                    
                     
                         // need to scroll while pinching
                     guard let container = currentTimeline?.container else {
@@ -441,21 +441,17 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                         return
                     }
                     
-                    let bounds = container.bounds
-                        // we have increased the height by sender.scale
-                        // the bounds y will decrease by 0.5 of this height change
-                        // if < 0, then zero
-                    let scaledHeight = bounds.size.height * sender.scale;
-                    let heightDiff = (scaledHeight - bounds.size.height)
-                    var yChange = bounds.origin.y - (heightDiff / 2)
-                    if (yChange < 0){
-                        yChange = 0
+                    var scrollBounds = container.bounds
+                        // we have increased the height of the timeline
+                        // the bounds y will increase by 0.5 of this height change
+                    let heightDiff = (zoomedTimelineHeight - currentTimelineHeight)
+                    var yZoomed = scrollBounds.origin.y + (heightDiff / 2)
+                    if (yZoomed < 0){
+                        yZoomed = 0
                     }
-                    var scaledBounds = bounds
-                    scaledBounds.origin.y = yChange
-                    container.bounds = scaledBounds
+                    scrollBounds.origin.y = yZoomed
+                    container.bounds = scrollBounds
                     
-                        //print("heightScaleFactor is \(heightScaleFactor)")
                     
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
                     sender.scale = 1.0;
@@ -465,6 +461,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     
                         // maybe width should only be adjusted on .ended
                         // need to try it out once we figure out how to adjust the layout elements
+                        // only useful when we have mulitple columns working
                         //print("Adjust column width in response to pinch gesture")
                     
                 }
