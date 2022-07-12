@@ -449,7 +449,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     if (yZoomed < 0){
                         yZoomed = 0
                     }
-                    scrollBounds.origin.y = yZoomed
+                    scrollBounds.origin.y = round(yZoomed)
                     container.bounds = scrollBounds
                     
                     
