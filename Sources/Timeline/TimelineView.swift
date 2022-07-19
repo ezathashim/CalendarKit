@@ -1,16 +1,20 @@
 import UIKit
 
 public protocol TimelineViewDelegate: AnyObject {
-    func timelineView(_ timelineView: TimelineView, didTapAt date: Date)
-    func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date)
+    func timelineView(_ timelineView: TimelineView, didTapAt date: Date, columnIndex: NSInteger)
+    func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date, columnIndex: NSInteger)
     func timelineView(_ timelineView: TimelineView, didTap event: EventView)
     func timelineView(_ timelineView: TimelineView, didLongPress event: EventView)
     func openIntervalForDate(_ date: Date) -> NSDateInterval
+    func numberOfColumnsForDate(_ date: Date)  -> NSInteger
+    func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
+    func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
 }
 
 public final class TimelineView: UIView {
     public weak var delegate: TimelineViewDelegate?
-    
+    public let timeSidebarWidth : CGFloat = 53
+
     public var date = Date() {
         didSet {
             setNeedsLayout()
@@ -236,21 +240,264 @@ public final class TimelineView: UIView {
         if (gestureRecognizer.state == .began) {
                 // Get timeslot of gesture location
             let pressedLocation = gestureRecognizer.location(in: self)
+            let colIndex = columnIndexAtPoint( pressedLocation)
             if let eventView = findEventView(at: pressedLocation) {
                 delegate?.timelineView(self, didLongPress: eventView)
             } else {
-                delegate?.timelineView(self, didLongPressAt: yToDate(pressedLocation.y))
+                delegate?.timelineView(self, didLongPressAt: yToDate(pressedLocation.y), columnIndex: colIndex)
             }
         }
     }
     
     @objc private func tap(_ sender: UITapGestureRecognizer) {
         let pressedLocation = sender.location(in: self)
+        let colIndex = columnIndexAtPoint( pressedLocation)
         if let eventView = findEventView(at: pressedLocation) {
             delegate?.timelineView(self, didTap: eventView)
         } else {
-            delegate?.timelineView(self, didTapAt: yToDate(pressedLocation.y))
+            delegate?.timelineView(self, didTapAt: yToDate(pressedLocation.y), columnIndex: colIndex)
         }
+    }
+
+    
+        // MARK: - Column and Title Calculations
+
+    
+        // show the column titles
+    private var titleViews = [TimelineColumnTitleView]()
+    
+    public func discardTitles() {
+        for titleView in titleViews {
+            titleView.removeFromSuperview()
+        }
+        titleViews.removeAll()
+    }
+    
+    
+    override public var frame: CGRect {
+        get {
+            return super.frame
+        }
+        set {
+            let currentWidth = super.frame.size.width
+            super.frame = newValue
+            if (abs(currentWidth - newValue.size.width) > 0.1){
+                layoutColumnTitles(false)
+            }
+            
+        }
+    }
+    
+    
+    public func hideColumnTitles(_ animated : Bool) {
+        var needToHide = false
+        for view in titleViews {
+            if (view.alpha > 0){
+                needToHide = true
+                break
+            }
+        }
+        if (needToHide == false){
+            return
+        }
+        
+        var duration = 0.0
+        if (animated == true){
+            duration = 0.24
+        }
+        
+        UIView.animate(withDuration: duration,
+                       animations: {
+            for titleView in self.titleViews {
+                titleView.alpha = 0
+            }
+        })
+        
+    }
+    
+    
+    public func showColumnTitles(_ animated : Bool) {
+        var needToShow = false
+        for view in titleViews {
+            if (view.alpha == 0){
+                needToShow = true
+                break
+            }
+        }
+        if (needToShow == false){
+            return
+        }
+        
+        var duration = 0.0
+        if (animated == true){
+            duration = 0.24
+        }
+        
+        UIView.animate(withDuration: duration,
+                       animations: {
+            for titleView in self.titleViews {
+                titleView.alpha = 1
+            }
+        })
+        
+    }
+    
+    public func layoutColumnTitles(_ animated : Bool) {
+        
+        guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
+            discardTitles()
+            return
+        }
+        
+        while (titleViews.count < totalColumnCount){
+            titleViews.append(TimelineColumnTitleView())
+        }
+        
+        while (titleViews.count > totalColumnCount){
+            titleViews.removeLast()
+        }
+        
+        
+        let viewInset : CGFloat = 8
+        let topDate = visibleInterval()?.start ?? yToDate(1);
+        let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
+        
+        var duration = 0.0
+        if (animated == true){
+            duration = 0.24
+        }
+        
+        UIView.animate(withDuration: duration,
+                       animations: { [self] in
+            
+            for colNum in 1...totalColumnCount {
+                let index = colNum - 1
+                let title = delegate?.titleOfColumnForDate(date, columnIndex:  index)
+                if (title == nil){
+                    continue
+                }
+                let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
+                if (trimmed.count == 0){
+                    continue
+                }
+                
+                    // add a view
+                let titleView = titleViews[index]
+                titleView.text = trimmed
+                self.addSubview(titleView)
+                titleViews.append(titleView)
+                
+                let columnFrame = self.frameForColumn(columnIndex: index)
+                let fittingFrame = titleView.sizeThatFits(columnFrame.size)
+                
+                let frame = CGRect(x: columnFrame.origin.x + viewInset,
+                                   y: yPoint,
+                                   width: columnFrame.width - viewInset * 2,
+                                   height: fittingFrame.height)
+                titleView.frame = frame
+                
+            }
+        }) {_ in
+            
+            self.showColumnTitles(animated)
+            
+        }
+    }
+    
+    
+        // maybe move this to Timeline
+        // although, we need to consider the total width based on device
+    private func columnIndexAtPoint(_ point : CGPoint) -> NSInteger {
+        
+        let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
+        if (totalColumnCount == 1){
+            return 0
+        }
+        
+        for colNum in 1...totalColumnCount {
+            let colIndex = colNum - 1
+            let colFrame = frameForColumn(columnIndex: colIndex)
+            if colFrame.contains(point){
+                return colIndex
+            }
+        }
+        return 0
+    }
+    
+    private func frameForColumn(columnIndex : NSInteger) -> CGRect {
+        
+        guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
+            return CGRect(x: 0,
+                          y: 0,
+                          width: bounds.width,
+                          height: fullHeight)
+        }
+        
+        if (columnIndex >= totalColumnCount){
+            return CGRect(x: 0,
+                          y: 0,
+                          width: bounds.width,
+                          height: fullHeight)
+        }
+        
+        
+        var xInset = timeSidebarWidth
+        if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
+            
+                // right to left
+                // start at zero
+            xInset = 0
+        }
+        
+        
+            // divide the width by totalColumn - timeline.timeSidebarWidth
+        let totalWidth = bounds.width - timeSidebarWidth
+        let columnWidth = totalWidth / CGFloat(totalColumnCount)
+        let xPoint = columnWidth * CGFloat(columnIndex) + xInset
+        
+        return CGRect(x: xPoint,
+                      y: 0,
+                      width: columnWidth,
+                      height: fullHeight)
+        
+    }
+    
+    
+    public func frameForDescriptor(_ descriptor : EventDescriptor) -> CGRect {
+        let eventColIndex = delegate?.columnIndexForDescriptor( descriptor,
+                                                                date: date) ?? 0
+        let frame = frameForColumn(columnIndex: eventColIndex)
+        let startY = dateToY(descriptor.dateInterval.start)
+        let endY = dateToY(descriptor.dateInterval.end)
+        return CGRect(x: frame.origin.x,
+                      y: startY,
+                      width: frame.size.width,
+                      height: endY - startY)
+    }
+    
+    
+    private func frameForClosedInterval(_ dateInterval: NSDateInterval) -> CGRect {
+        
+            // will frame out an area minus the timeSidebar
+        let beginStart = dateToY(dateInterval.startDate);
+        let endStart = dateToY(dateInterval.endDate);
+        
+        var xPoint = timeSidebarWidth
+        if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
+            
+                // right to left
+                // start at zero
+            xPoint = 0
+        }
+        
+        let totalWidth = bounds.width - timeSidebarWidth
+        let totalHeight = endStart - beginStart
+        
+        return CGRect(x: xPoint,
+                      y: beginStart,
+                      width: totalWidth,
+                      height: totalHeight)
+        
     }
     
     
@@ -273,17 +520,17 @@ public final class TimelineView: UIView {
         if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
             
                 // right to left
-                // inset width by 53
+                // inset width by timeSidebarWidth
             eventRect = CGRect(x: drawRect.minX,
                                y: drawRect.minY,
-                               width: (drawRect.width - 53),
+                               width: (drawRect.width - timeSidebarWidth),
                                height: drawRect.height);
             
         } else {
             
                 // left to right
-                // push x by 53
-            eventRect = CGRect(x: (drawRect.minX + 53),
+                // push x by timeSidebarWidth
+            eventRect = CGRect(x: (drawRect.minX + timeSidebarWidth),
                                y: drawRect.minY,
                                width: drawRect.width,
                                height: drawRect.height);
@@ -292,14 +539,7 @@ public final class TimelineView: UIView {
         
             // find the closed areas
         let closedStartInterval = closedStartInterval()
-        
-        let beginStart = dateToY(closedStartInterval.startDate);
-        let endStart = dateToY(closedStartInterval.endDate);
-        
-        let closedStartRect = CGRect(x: eventRect.minX,
-                                     y: beginStart,
-                                     width: eventRect.width,
-                                     height: (endStart - beginStart));
+        let closedStartRect = frameForClosedInterval(closedStartInterval)
         
         let closedStart = eventRect.intersection(closedStartRect)
         if (closedStart.isNull == false){
@@ -313,14 +553,7 @@ public final class TimelineView: UIView {
         }
         
         let closedEndInterval = closedEndInterval()
-        
-        let beginEnd = dateToY(closedEndInterval.startDate);
-        let endEnd = dateToY(closedEndInterval.endDate);
-        
-        let closedEndRect = CGRect(x: eventRect.minX,
-                                   y: beginEnd,
-                                   width: eventRect.width,
-                                   height: (endEnd - beginEnd));
+        let closedEndRect = frameForClosedInterval(closedEndInterval)
         
         let closedEnd = eventRect.intersection(closedEndRect)
         if (closedEnd.isNull == false){
@@ -333,6 +566,130 @@ public final class TimelineView: UIView {
         }
         
     }
+    
+        // supposed to draw a pattern, but something is not working
+        // I get a crash when trying to use it
+        // https://www.raywenderlich.com/19164942-core-graphics-tutorial-patterns-and-playgrounds
+    
+//    private func drawClosedTrianglePattern(context: CGContext, in drawRect: CGRect)  {
+//
+//        let lightColor: UIColor = .orange
+//        let darkColor: UIColor = .yellow
+//        let patternSize: CGFloat = 200
+//
+//
+//            // make thr triangle image
+//        let drawSize = CGSize(width: patternSize,
+//                              height: patternSize)
+//
+//            // make the triangle image
+//        UIGraphicsBeginImageContextWithOptions(drawSize, true, 0.0)
+//
+//            // Set the fill color for the new context
+//        darkColor.setFill()
+//        context.fill(CGRect(x: 0,
+//                            y: 0,
+//                            width: drawSize.width,
+//                            height: drawSize.height))
+//
+//        let trianglePath = UIBezierPath()
+//            // 1
+//        trianglePath.move(to: CGPoint(x: drawSize.width / 2, y: 0))
+//            // 2
+//        trianglePath.addLine(to: CGPoint(x: 0, y: drawSize.height / 2))
+//            // 3
+//        trianglePath.addLine(to: CGPoint(x: drawSize.width, y: drawSize.height / 2))
+//
+//            // 4
+//        trianglePath.move(to: CGPoint(x: 0, y: drawSize.height / 2))
+//            // 5
+//        trianglePath.addLine(to: CGPoint(x: drawSize.width / 2, y: drawSize.height))
+//            // 6
+//        trianglePath.addLine(to: CGPoint(x: 0, y: drawSize.height))
+//
+//            // 7
+//        trianglePath.move(to: CGPoint(x: drawSize.width, y: drawSize.height / 2))
+//            // 8
+//        trianglePath.addLine(to: CGPoint(x: drawSize.width / 2, y: drawSize.height))
+//            // 9
+//        trianglePath.addLine(to: CGPoint(x: drawSize.width, y: drawSize.height))
+//
+//        lightColor.setFill()
+//        trianglePath.fill()
+//
+//        guard let image = UIGraphicsGetImageFromCurrentImageContext() else {
+//            fatalError("\(#function):\(#line) Failed to get an image from current context.")
+//        }
+//        UIGraphicsEndImageContext()
+//
+//
+//            // left to right
+//            // inset width
+//        var eventRect = drawRect;
+//        if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
+//
+//                // right to left
+//                // inset width by timeSidebarWidth
+//            eventRect = CGRect(x: drawRect.minX,
+//                               y: drawRect.minY,
+//                               width: (drawRect.width - timeSidebarWidth),
+//                               height: drawRect.height);
+//
+//        } else {
+//
+//                // left to right
+//                // push x by timeSidebarWidth
+//            eventRect = CGRect(x: (drawRect.minX + timeSidebarWidth),
+//                               y: drawRect.minY,
+//                               width: drawRect.width,
+//                               height: drawRect.height);
+//
+//        }
+//
+//
+//            // find the closed areas
+//        let closedStartInterval = closedStartInterval()
+//        let closedStartRect = frameForClosedInterval(closedStartInterval);
+//
+//        let closedStart = eventRect.intersection(closedStartRect)
+//        if (closedStart.isNull == false){
+//
+//            context.interpolationQuality = .none
+//
+//            context.saveGState()
+//
+//                // draw the dark background
+//            context.setFillColor(darkColor.cgColor)
+//            context.fill(closedStart)
+//
+//                // draw the image pattern
+//            UIColor(patternImage: image).setFill()
+//            context.fill(closedStart)
+//
+//            context.restoreGState()
+//
+//        }
+//
+//        let closedEndInterval = closedEndInterval()
+//        let closedEndRect = frameForClosedInterval(closedEndInterval)
+//
+//        let closedEnd = eventRect.intersection(closedEndRect)
+//        if (closedEnd.isNull == false){
+//
+//            context.interpolationQuality = .none
+//                // draw the dark background
+//            context.setFillColor(darkColor.cgColor)
+//            context.fill(closedEnd)
+//
+//                // draw the image pattern
+//            UIColor(patternImage: image).setFill()
+//            context.fill(closedEnd)
+//
+//            context.restoreGState()
+//        }
+//
+//    }
+    
     
     private func closedStartInterval() -> NSDateInterval {
         
@@ -479,9 +836,9 @@ public final class TimelineView: UIView {
             context?.setLineWidth(hourLineHeight)
             let xStart: CGFloat = {
                 if rightToLeft {
-                    return bounds.width - 53
+                    return bounds.width - timeSidebarWidth
                 } else {
-                    return 53
+                    return timeSidebarWidth
                 }
             }()
             let xEnd: CGFloat = {
@@ -491,10 +848,23 @@ public final class TimelineView: UIView {
                     return bounds.width
                 }
             }()
+            
+            let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
+            let totalWidth = abs(xEnd - xStart)
+            var eachColWidth = CGFloat(totalWidth) / CGFloat(totalColumnCount)
+            eachColWidth = 1 * floor(((eachColWidth)/1)+0.5);
+            
             let y = style.verticalInset + hourFloat * style.verticalDiff + offset
             context?.beginPath()
             context?.move(to: CGPoint(x: xStart, y: y))
             context?.addLine(to: CGPoint(x: xEnd, y: y))
+            context?.setLineWidth(hourLineHeight / 2)
+            for colNum in 1...totalColumnCount {
+                let index = colNum - 1
+                let verticalXStart = xStart + eachColWidth * CGFloat(index)
+                context?.move(to: CGPoint(x: verticalXStart, y: y))
+                context?.addLine(to: CGPoint(x: verticalXStart, y: rect.height))
+            }
             context?.strokePath()
             context?.restoreGState()
             
@@ -504,7 +874,7 @@ public final class TimelineView: UIView {
             let timeRect: CGRect = {
                 var x: CGFloat
                 if rightToLeft {
-                    x = bounds.width - 53
+                    x = bounds.width - timeSidebarWidth
                 } else {
                     x = 2
                 }
@@ -539,6 +909,7 @@ public final class TimelineView: UIView {
                 timeString.draw(in: timeRect, withAttributes: attributes)
             }
         }
+        
     }
     
         // MARK: - Layout
@@ -616,42 +987,64 @@ public final class TimelineView: UIView {
             return start1 < start2
         }
         
+            // subsort by column
+        var subsortedEvents = [[EventLayoutAttributes]]()
+        let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
+        for colNum in 1...totalColumnCount {
+            let colIndex = colNum - 1
+            
+            var colEvents = [EventLayoutAttributes]()
+            for event in sortedEvents {
+                let eventColIndex = delegate?.columnIndexForDescriptor( event.descriptor,
+                                                                        date: date) ?? 0
+                if (eventColIndex == colIndex){
+                    colEvents.append(event)
+                }
+            }
+            
+            subsortedEvents.append(colEvents)
+        }
+        
+        
+        
         var groupsOfEvents = [[EventLayoutAttributes]]()
         var overlappingEvents = [EventLayoutAttributes]()
         
-        for event in sortedEvents {
-            if overlappingEvents.isEmpty {
-                overlappingEvents.append(event)
-                continue
-            }
-            
-            let longestEvent = overlappingEvents.sorted { (attr1, attr2) -> Bool in
-                var period = attr1.descriptor.dateInterval
-                let period1 = period.end.timeIntervalSince(period.start)
-                period = attr2.descriptor.dateInterval
-                let period2 = period.end.timeIntervalSince(period.start)
+        for eventByColArray in subsortedEvents {
+            for event in eventByColArray {
+                if overlappingEvents.isEmpty {
+                    overlappingEvents.append(event)
+                    continue
+                }
                 
-                return period1 > period2
-            }
-                .first!
-            
-            if style.eventsWillOverlap {
-                guard let earliestEvent = overlappingEvents.first?.descriptor.dateInterval.start else { continue }
-                let dateInterval = getDateInterval(date: earliestEvent)
-                if event.descriptor.dateInterval.contains(dateInterval.start) {
-                    overlappingEvents.append(event)
-                    continue
+                let longestEvent = overlappingEvents.sorted { (attr1, attr2) -> Bool in
+                    var period = attr1.descriptor.dateInterval
+                    let period1 = period.end.timeIntervalSince(period.start)
+                    period = attr2.descriptor.dateInterval
+                    let period2 = period.end.timeIntervalSince(period.start)
+                    
+                    return period1 > period2
                 }
-            } else {
-                let lastEvent = overlappingEvents.last!
-                if (longestEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (longestEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) ||
-                    (lastEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (lastEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) {
-                    overlappingEvents.append(event)
-                    continue
+                    .first!
+                
+                if style.eventsWillOverlap {
+                    guard let earliestEvent = overlappingEvents.first?.descriptor.dateInterval.start else { continue }
+                    let dateInterval = getDateInterval(date: earliestEvent)
+                    if event.descriptor.dateInterval.contains(dateInterval.start) {
+                        overlappingEvents.append(event)
+                        continue
+                    }
+                } else {
+                    let lastEvent = overlappingEvents.last!
+                    if (longestEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (longestEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) ||
+                        (lastEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (lastEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) {
+                        overlappingEvents.append(event)
+                        continue
+                    }
                 }
+                groupsOfEvents.append(overlappingEvents)
+                overlappingEvents = [event]
             }
-            groupsOfEvents.append(overlappingEvents)
-            overlappingEvents = [event]
         }
         
         groupsOfEvents.append(overlappingEvents)
@@ -660,12 +1053,14 @@ public final class TimelineView: UIView {
         for overlappingEvents in groupsOfEvents {
             let totalCount = CGFloat(overlappingEvents.count)
             for (index, event) in overlappingEvents.enumerated() {
-                let startY = dateToY(event.descriptor.dateInterval.start)
-                let endY = dateToY(event.descriptor.dateInterval.end)
+                let eventSoloFrame = frameForDescriptor(event.descriptor)
+                let sharedWidth = eventSoloFrame.size.width / totalCount
                 let floatIndex = CGFloat(index)
-                let x = style.leadingInset + floatIndex / totalCount * calendarWidth
-                let equalWidth = calendarWidth / totalCount
-                event.frame = CGRect(x: x, y: startY, width: equalWidth, height: endY - startY)
+                let x = eventSoloFrame.origin.x + floatIndex * sharedWidth
+                event.frame = CGRect(x: x,
+                                     y: eventSoloFrame.origin.y,
+                                     width: sharedWidth,
+                                     height: eventSoloFrame.size.height)
             }
         }
     }

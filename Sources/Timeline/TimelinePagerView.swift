@@ -6,18 +6,24 @@ public protocol TimelinePagerViewDelegate: AnyObject {
     
     func timelinePagerDidSelectEventView(_ eventView: EventView)
     func timelinePagerDidLongPressEventView(_ eventView: EventView)
-    func timelinePager(timelinePager: TimelinePagerView, didTapTimelineAt date: Date)
+    func timelinePager(timelinePager: TimelinePagerView, didTapTimelineAt date: Date, columnIndex: NSInteger)
     func timelinePagerDidBeginDragging(timelinePager: TimelinePagerView)
     func timelinePagerDidTransitionCancel(timelinePager: TimelinePagerView)
     func timelinePager(timelinePager: TimelinePagerView, willMoveTo date: Date)
     func timelinePager(timelinePager: TimelinePagerView, didMoveTo  date: Date)
-    func timelinePager(timelinePager: TimelinePagerView, didLongPressTimelineAt date: Date)
+    func timelinePager(timelinePager: TimelinePagerView, didLongPressTimelineAt date: Date, columnIndex: NSInteger)
+
     
         // Editing
     func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor)
     
         //TimelineInfo
     func openIntervalForDate(_ date: Date) -> NSDateInterval
+    
+        // optional dataSource API
+    func numberOfColumnsForDate(_ date: Date)  -> NSInteger
+    func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
+    func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
     
 }
 
@@ -206,20 +212,41 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         return controller
     }
     
+    private var draggingVertically : Bool = true
     private var initialContentOffset = CGPoint.zero
     public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         initialContentOffset = scrollView.contentOffset
+        
+        let velocity = scrollView.panGestureRecognizer.velocity(in: scrollView.superview)
+        draggingVertically = abs(velocity.x) < abs(velocity.y)
+        if (draggingVertically){
+            currentTimeline?.timeline.hideColumnTitles(true)
+        }
     }
     
+    
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offset = scrollView.contentOffset
-        let diff = offset.y - initialContentOffset.y
+        var offset = scrollView.contentOffset
+        if (draggingVertically == true){
+            offset.x = initialContentOffset.x
+        } else {
+            offset.y = initialContentOffset.y
+        }
+        scrollView.contentOffset = offset
+        
+        let diffX = offset.x - initialContentOffset.x
+        let diffY = offset.y - initialContentOffset.y
         if let event = editedEventView {
             var frame = event.frame
-            frame.origin.y -= diff
+            frame.origin.x -= diffX
+            frame.origin.y -= diffY
             event.frame = frame
             initialContentOffset = offset
         }
+    }
+    
+    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        currentTimeline?.timeline.layoutColumnTitles(true)
     }
     
     public func reloadData() {
@@ -246,6 +273,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let day = DateInterval(start: date, end: end)
         let validEvents = events.filter{$0.dateInterval.intersects(day)}
         timeline.layoutAttributes = validEvents.map(EventLayoutAttributes.init)
+        
+        timeline.layoutColumnTitles(false)
+
     }
     
     public func scrollToFirstEventIfNeeded(animated: Bool) {
@@ -326,20 +356,17 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 panGestureRecognizer.cancelsTouchesInView = true
             }
             
+
             let timeline = currentTimeline.timeline
-            let offset = currentTimeline.container.contentOffset.y
+            let offsetX = currentTimeline.container.contentOffset.x
+            let offsetY = currentTimeline.container.contentOffset.y
                 // algo needs to be extracted to a separate object
-            let yStart = timeline.dateToY(event.dateInterval.start) - offset
-            let yEnd = timeline.dateToY(event.dateInterval.end) - offset
             
+            var eventFrame = timeline.frameForDescriptor(event)
             
-            let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
-            let x = rightToLeft ? 0 : timeline.style.leadingInset
-            let newRect = CGRect(x: x,
-                                 y: yStart,
-                                 width: timeline.calendarWidth,
-                                 height: yEnd - yStart)
-            eventView.frame = newRect
+            eventFrame.origin.x = eventFrame.origin.x - offsetX
+            eventFrame.origin.y = eventFrame.origin.y - offsetY
+            eventView.frame = eventFrame
             
             if animated {
                 eventView.animateCreation()
@@ -370,7 +397,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
             
             let diff = CGPoint(x: newCoord.x - prevOffset.x, y: newCoord.y - prevOffset.y)
-            pendingEvent.frame.origin.x += diff.x
+            // uncomment if you want to allow for the x to change during drag
+            //pendingEvent.frame.origin.x += diff.x
             pendingEvent.frame.origin.y += diff.y
             prevOffset = newCoord
             accentDateForEditedEventView()
@@ -384,7 +412,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
         
         if (allowsZooming == false){
-            return;
+            return
+        }
+        
+        if (editedEventView != nil){
+                // do not allow zoom while editing
+            return
         }
         
         if (sender.state == .began) {
@@ -550,8 +583,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 let leftToRight = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .leftToRight
                 let x = leftToRight ? style.leadingInset : 0
                 
+                let colIndex = timeline.delegate?.columnIndexForDescriptor(editedEventView.descriptor!, date: timeline.date) ?? 0
+                let colCorrectionX = editedEventView.frame.width * CGFloat(colIndex) - currentTimeline.container.contentOffset.x
+                
                 var eventFrame = editedEventView.frame
-                eventFrame.origin.x = x
+                eventFrame.origin.x = colCorrectionX + x
                 eventFrame.origin.y = timeline.dateToY(snapped) - currentTimeline.container.contentOffset.y
                 
                 if resizeHandleTag == 0 {
@@ -693,6 +729,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             return
         }
         if let timelineContainerController = pageViewController.viewControllers?.first as? TimelineContainerController {
+            var offset = timelineContainerController.container.contentOffset
+            offset.x = 0
+            UIView.animate(withDuration: 0.2, animations: {
+                timelineContainerController.container.contentOffset = offset
+            }, completion: nil)
+            
+            
             let selectedDate = timelineContainerController.timeline.date
             delegate?.timelinePager(timelinePager: self, willMoveTo: selectedDate)
             state?.client(client: self, didMoveTo: selectedDate)
@@ -707,13 +750,14 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
         // MARK: TimelineViewDelegate
     
-    public func timelineView(_ timelineView: TimelineView, didTapAt date: Date) {
-        delegate?.timelinePager(timelinePager: self, didTapTimelineAt: date)
+    public func timelineView(_ timelineView: TimelineView, didTapAt date: Date, columnIndex: NSInteger){
+        delegate?.timelinePager(timelinePager: self, didTapTimelineAt: date, columnIndex: columnIndex)
     }
     
-    public func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date) {
-        delegate?.timelinePager(timelinePager: self, didLongPressTimelineAt: date)
+    public func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date, columnIndex: NSInteger){
+        delegate?.timelinePager(timelinePager: self, didLongPressTimelineAt: date, columnIndex: columnIndex)
     }
+
     
     public func timelineView(_ timelineView: TimelineView, didTap event: EventView) {
         delegate?.timelinePagerDidSelectEventView(event)
@@ -732,4 +776,40 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         return delegate?.openIntervalForDate( date) ?? allDayInterval
     }
+    
+    
+        // MARK: TimelineDelegate Columns
+
+    public func numberOfColumnsForDate(_ date: Date) -> NSInteger {
+        guard var columnNumber = delegate?.numberOfColumnsForDate(date) else {
+            return 1
+        }
+        if (columnNumber < 1){
+            columnNumber = 1
+        }
+        return columnNumber
+    }
+    
+    
+    public func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString {
+        let title = delegate?.titleOfColumnForDate(date,
+                                                   columnIndex: columnIndex) ?? ""
+        return title
+    }
+    
+    
+    public func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger {
+        guard let index = delegate?.columnIndexForDescriptor(descriptor, date: date) else {
+            return 0
+        }
+        if (index < 0){
+            return 0
+        }
+        let numberOfColumns = numberOfColumnsForDate(date)
+        if (index >= numberOfColumns){
+            return 0
+        }
+        return index
+    }
+    
 }

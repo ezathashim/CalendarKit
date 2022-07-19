@@ -89,3 +89,14 @@ public struct AllDayViewStyle {
   public var allDayColor: UIColor = SystemColors.label
   public init() {}
 }
+
+
+public struct TimelineColumnTitleStyle {
+    public var backgroundColor: UIColor = SystemColors.secondarySystemBackground
+    public var borderColor: UIColor = SystemColors.label
+    public var borderWidth: CGFloat = 0.5
+    public var cornerRadius: CGFloat = 10
+    public var font = UIFont.systemFont(ofSize: 11)
+    public var textColor: UIColor = SystemColors.label
+    public init() {}
+}

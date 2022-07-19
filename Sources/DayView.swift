@@ -12,6 +12,15 @@ import UIKit
     func dayView(dayView: DayView, didMoveTo  date: Date)
     func dayView(dayView: DayView, didUpdate event: EventDescriptor)
     func openIntervalForDate(_ date: Date) -> NSDateInterval
+    
+        // optional dataSource API
+    @objc optional func numberOfColumnsForDate(_ date: Date) -> NSInteger
+    @objc optional func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
+    @objc optional func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
+    
+        // will preferentially call these instead of the non-optional variants above without columnIndex
+    @objc optional func dayView(dayView: DayView, didTapTimelineAt date: Date, columnIndex : NSInteger)
+    @objc optional func dayView(dayView: DayView, didLongPressTimelineAt date: Date, columnIndex : NSInteger)
 }
 
 public class DayView: UIView, TimelinePagerViewDelegate {
@@ -242,11 +251,12 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     public func timelinePager(timelinePager: TimelinePagerView, didMoveTo  date: Date) {
         delegate?.dayView(dayView: self, didMoveTo: date)
     }
-    public func timelinePager(timelinePager: TimelinePagerView, didLongPressTimelineAt date: Date) {
-        delegate?.dayView(dayView: self, didLongPressTimelineAt: date)
+    
+    public func timelinePager(timelinePager: TimelinePagerView, didLongPressTimelineAt date: Date, columnIndex: NSInteger){
+        delegate?.dayView?(dayView: self, didLongPressTimelineAt: date, columnIndex: columnIndex) ?? delegate?.dayView(dayView: self, didLongPressTimelineAt: date)
     }
-    public func timelinePager(timelinePager: TimelinePagerView, didTapTimelineAt date: Date) {
-        delegate?.dayView(dayView: self, didTapTimelineAt: date)
+    public func timelinePager(timelinePager: TimelinePagerView, didTapTimelineAt date: Date, columnIndex: NSInteger) {
+        delegate?.dayView?(dayView: self, didTapTimelineAt: date, columnIndex: columnIndex) ?? delegate?.dayView(dayView: self, didTapTimelineAt: date)
     }
     public func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor) {
         delegate?.dayView(dayView: self, didUpdate: event)
@@ -261,5 +271,42 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         
         return delegate?.openIntervalForDate( date) ?? allDayInterval
     }
+    
+    
+        // optional API
+    
+    public func numberOfColumnsForDate(_ date: Date) -> NSInteger {
+        guard var columnNumber = delegate?.numberOfColumnsForDate?(date) else {
+            return 1
+        }
+        if (columnNumber < 1){
+            columnNumber = 1
+        }
+        return columnNumber
+    }
+    
+    
+    public func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString {
+        guard let title = delegate?.titleOfColumnForDate?(date, columnIndex: columnIndex) else {
+            return ""
+        }
+        return title
+    }
+    
+    
+    public func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger {
+        guard let index = delegate?.columnIndexForDescriptor?(descriptor, date: date) else {
+            return 0
+        }
+        if (index < 0){
+            return 0
+        }
+        let numberOfColumns = numberOfColumnsForDate(date)
+        if (index >= numberOfColumns){
+            return 0
+        }
+        return index
+    }
+    
     
 }

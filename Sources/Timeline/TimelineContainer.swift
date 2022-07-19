@@ -3,9 +3,14 @@ import UIKit
 public final class TimelineContainer: UIScrollView {
     public let timeline: TimelineView
     
+        // iPhone SE is 320 points wide, 640 pixels wide
+    private let minColWidth: CGFloat = 300
+    
     public init(_ timeline: TimelineView) {
         self.timeline = timeline
         super.init(frame: .zero)
+        self.showsHorizontalScrollIndicator = false
+        self.showsVerticalScrollIndicator = false
     }
     
     @available(*, unavailable)
@@ -15,7 +20,19 @@ public final class TimelineContainer: UIScrollView {
     
     override public func layoutSubviews() {
         super.layoutSubviews()
-        timeline.frame = CGRect(x: 0, y: 0, width: bounds.width, height: timeline.fullHeight)
+        
+        let totalColumnNumber = timeline.delegate?.numberOfColumnsForDate(timeline.date) ?? 1
+        var colWidth = (bounds.width - timeline.timeSidebarWidth) / CGFloat(totalColumnNumber)
+        if (colWidth < minColWidth){
+            colWidth = minColWidth
+        }
+        let timelineWidth = timeline.timeSidebarWidth + colWidth * CGFloat(totalColumnNumber);
+        
+        
+        timeline.frame = CGRect(x: 0,
+                                y: 0,
+                                width: timelineWidth,
+                                height: timeline.fullHeight)
         timeline.offsetAllDayView(by: contentOffset.y)
         
         
