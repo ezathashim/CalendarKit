@@ -18,7 +18,7 @@ public final class TimelineColumnTitleView: UIView {
             layer.borderColor = style.borderColor.cgColor
             layer.borderWidth = style.borderWidth
             layer.cornerRadius = style.cornerRadius
-
+            
             textLabel.font = style.font
             textLabel.textColor = style.textColor
         }
@@ -75,7 +75,7 @@ public final class TimelineColumnTitleView: UIView {
         
         contraints[2].priority = UILayoutPriority(995)
         contraints[3].priority = UILayoutPriority(995)
-
+        
         addConstraints(contraints)
         NSLayoutConstraint.activate(contraints)
         
@@ -87,7 +87,7 @@ public final class TimelineColumnTitleView: UIView {
         let labelSize = textLabel.sizeThatFits(size)
         let widthValue = 1 * floor(((labelSize.width + 8 + 8)/1)+0.5);
         let heightValue = 1 * floor(((labelSize.height + 8 + 8)/1)+0.5);
-
+        
         return CGSize(width: widthValue,
                       height: heightValue)
     }
@@ -103,6 +103,6 @@ public final class TimelineColumnTitleView: UIView {
             layoutIfNeeded()
         }
     }
-        
-            
+    
+    
 }

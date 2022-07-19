@@ -12,7 +12,7 @@ public protocol TimelinePagerViewDelegate: AnyObject {
     func timelinePager(timelinePager: TimelinePagerView, willMoveTo date: Date)
     func timelinePager(timelinePager: TimelinePagerView, didMoveTo  date: Date)
     func timelinePager(timelinePager: TimelinePagerView, didLongPressTimelineAt date: Date, columnIndex: NSInteger)
-
+    
     
         // Editing
     func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor)
@@ -220,7 +220,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let velocity = scrollView.panGestureRecognizer.velocity(in: scrollView.superview)
         draggingVertically = abs(velocity.x) < abs(velocity.y)
         if (draggingVertically){
-            currentTimeline?.timeline.hideColumnTitles(true)
+            currentTimeline?.timeline.hideColumnTitles(true, duration: 0.24)
+        }
+        
+        if (velocity.equalTo(CGPoint.zero)){
+            scrollViewDidEndScrollingAnimation(scrollView)
         }
     }
     
@@ -245,8 +249,19 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
+    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        
+        if (decelerate == false){
+            scrollViewDidEndScrollingAnimation(scrollView)
+        }
+    }
+    
     public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        currentTimeline?.timeline.layoutColumnTitles(true)
+        scrollViewDidEndScrollingAnimation(scrollView)
+    }
+    
+    public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        currentTimeline?.timeline.layoutColumnTitles(true, duration: 0.36)
     }
     
     public func reloadData() {
@@ -274,8 +289,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let validEvents = events.filter{$0.dateInterval.intersects(day)}
         timeline.layoutAttributes = validEvents.map(EventLayoutAttributes.init)
         
-        timeline.layoutColumnTitles(false)
-
+        timeline.layoutColumnTitles(false, duration: 0)
+        
     }
     
     public func scrollToFirstEventIfNeeded(animated: Bool) {
@@ -356,7 +371,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 panGestureRecognizer.cancelsTouchesInView = true
             }
             
-
+            
             let timeline = currentTimeline.timeline
             let offsetX = currentTimeline.container.contentOffset.x
             let offsetY = currentTimeline.container.contentOffset.y
@@ -397,8 +412,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
             
             let diff = CGPoint(x: newCoord.x - prevOffset.x, y: newCoord.y - prevOffset.y)
-            // uncomment if you want to allow for the x to change during drag
-            //pendingEvent.frame.origin.x += diff.x
+                // uncomment if you want to allow for the x to change during drag
+                //pendingEvent.frame.origin.x += diff.x
             pendingEvent.frame.origin.y += diff.y
             prevOffset = newCoord
             accentDateForEditedEventView()
@@ -757,7 +772,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     public func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date, columnIndex: NSInteger){
         delegate?.timelinePager(timelinePager: self, didLongPressTimelineAt: date, columnIndex: columnIndex)
     }
-
+    
     
     public func timelineView(_ timelineView: TimelineView, didTap event: EventView) {
         delegate?.timelinePagerDidSelectEventView(event)
@@ -779,7 +794,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     
         // MARK: TimelineDelegate Columns
-
+    
     public func numberOfColumnsForDate(_ date: Date) -> NSInteger {
         guard var columnNumber = delegate?.numberOfColumnsForDate(date) else {
             return 1

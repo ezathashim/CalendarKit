@@ -14,7 +14,7 @@ public protocol TimelineViewDelegate: AnyObject {
 public final class TimelineView: UIView {
     public weak var delegate: TimelineViewDelegate?
     public let timeSidebarWidth : CGFloat = 53
-
+    
     public var date = Date() {
         didSet {
             setNeedsLayout()
@@ -258,10 +258,10 @@ public final class TimelineView: UIView {
             delegate?.timelineView(self, didTapAt: yToDate(pressedLocation.y), columnIndex: colIndex)
         }
     }
-
+    
     
         // MARK: - Column and Title Calculations
-
+    
     
         // show the column titles
     private var titleViews = [TimelineColumnTitleView]()
@@ -282,14 +282,14 @@ public final class TimelineView: UIView {
             let currentWidth = super.frame.size.width
             super.frame = newValue
             if (abs(currentWidth - newValue.size.width) > 0.1){
-                layoutColumnTitles(false)
+                layoutColumnTitles(false, duration : 0.0)
             }
             
         }
     }
     
     
-    public func hideColumnTitles(_ animated : Bool) {
+    public func hideColumnTitles(_ animated : Bool, duration: TimeInterval) {
         var needToHide = false
         for view in titleViews {
             if (view.alpha > 0){
@@ -301,12 +301,12 @@ public final class TimelineView: UIView {
             return
         }
         
-        var duration = 0.0
+        var finalDuration = 0.0
         if (animated == true){
-            duration = 0.24
+            finalDuration = duration
         }
         
-        UIView.animate(withDuration: duration,
+        UIView.animate(withDuration: finalDuration,
                        animations: {
             for titleView in self.titleViews {
                 titleView.alpha = 0
@@ -316,7 +316,7 @@ public final class TimelineView: UIView {
     }
     
     
-    public func showColumnTitles(_ animated : Bool) {
+    public func showColumnTitles(_ animated : Bool, duration: TimeInterval) {
         var needToShow = false
         for view in titleViews {
             if (view.alpha == 0){
@@ -328,12 +328,12 @@ public final class TimelineView: UIView {
             return
         }
         
-        var duration = 0.0
+        var finalDuration = 0.0
         if (animated == true){
-            duration = 0.24
+            finalDuration = duration
         }
         
-        UIView.animate(withDuration: duration,
+        UIView.animate(withDuration: finalDuration,
                        animations: {
             for titleView in self.titleViews {
                 titleView.alpha = 1
@@ -342,7 +342,7 @@ public final class TimelineView: UIView {
         
     }
     
-    public func layoutColumnTitles(_ animated : Bool) {
+    public func layoutColumnTitles(_ animated : Bool, duration: TimeInterval) {
         
         guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
             discardTitles()
@@ -362,12 +362,12 @@ public final class TimelineView: UIView {
         let topDate = visibleInterval()?.start ?? yToDate(1);
         let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
         
-        var duration = 0.0
+        var finalDuration = 0.0
         if (animated == true){
-            duration = 0.24
+            finalDuration = duration / 2
         }
         
-        UIView.animate(withDuration: duration,
+        UIView.animate(withDuration: finalDuration,
                        animations: { [self] in
             
             for colNum in 1...totalColumnCount {
@@ -399,7 +399,7 @@ public final class TimelineView: UIView {
             }
         }) {_ in
             
-            self.showColumnTitles(animated)
+            self.showColumnTitles(animated, duration: finalDuration)
             
         }
     }
@@ -571,124 +571,124 @@ public final class TimelineView: UIView {
         // I get a crash when trying to use it
         // https://www.raywenderlich.com/19164942-core-graphics-tutorial-patterns-and-playgrounds
     
-//    private func drawClosedTrianglePattern(context: CGContext, in drawRect: CGRect)  {
-//
-//        let lightColor: UIColor = .orange
-//        let darkColor: UIColor = .yellow
-//        let patternSize: CGFloat = 200
-//
-//
-//            // make thr triangle image
-//        let drawSize = CGSize(width: patternSize,
-//                              height: patternSize)
-//
-//            // make the triangle image
-//        UIGraphicsBeginImageContextWithOptions(drawSize, true, 0.0)
-//
-//            // Set the fill color for the new context
-//        darkColor.setFill()
-//        context.fill(CGRect(x: 0,
-//                            y: 0,
-//                            width: drawSize.width,
-//                            height: drawSize.height))
-//
-//        let trianglePath = UIBezierPath()
-//            // 1
-//        trianglePath.move(to: CGPoint(x: drawSize.width / 2, y: 0))
-//            // 2
-//        trianglePath.addLine(to: CGPoint(x: 0, y: drawSize.height / 2))
-//            // 3
-//        trianglePath.addLine(to: CGPoint(x: drawSize.width, y: drawSize.height / 2))
-//
-//            // 4
-//        trianglePath.move(to: CGPoint(x: 0, y: drawSize.height / 2))
-//            // 5
-//        trianglePath.addLine(to: CGPoint(x: drawSize.width / 2, y: drawSize.height))
-//            // 6
-//        trianglePath.addLine(to: CGPoint(x: 0, y: drawSize.height))
-//
-//            // 7
-//        trianglePath.move(to: CGPoint(x: drawSize.width, y: drawSize.height / 2))
-//            // 8
-//        trianglePath.addLine(to: CGPoint(x: drawSize.width / 2, y: drawSize.height))
-//            // 9
-//        trianglePath.addLine(to: CGPoint(x: drawSize.width, y: drawSize.height))
-//
-//        lightColor.setFill()
-//        trianglePath.fill()
-//
-//        guard let image = UIGraphicsGetImageFromCurrentImageContext() else {
-//            fatalError("\(#function):\(#line) Failed to get an image from current context.")
-//        }
-//        UIGraphicsEndImageContext()
-//
-//
-//            // left to right
-//            // inset width
-//        var eventRect = drawRect;
-//        if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
-//
-//                // right to left
-//                // inset width by timeSidebarWidth
-//            eventRect = CGRect(x: drawRect.minX,
-//                               y: drawRect.minY,
-//                               width: (drawRect.width - timeSidebarWidth),
-//                               height: drawRect.height);
-//
-//        } else {
-//
-//                // left to right
-//                // push x by timeSidebarWidth
-//            eventRect = CGRect(x: (drawRect.minX + timeSidebarWidth),
-//                               y: drawRect.minY,
-//                               width: drawRect.width,
-//                               height: drawRect.height);
-//
-//        }
-//
-//
-//            // find the closed areas
-//        let closedStartInterval = closedStartInterval()
-//        let closedStartRect = frameForClosedInterval(closedStartInterval);
-//
-//        let closedStart = eventRect.intersection(closedStartRect)
-//        if (closedStart.isNull == false){
-//
-//            context.interpolationQuality = .none
-//
-//            context.saveGState()
-//
-//                // draw the dark background
-//            context.setFillColor(darkColor.cgColor)
-//            context.fill(closedStart)
-//
-//                // draw the image pattern
-//            UIColor(patternImage: image).setFill()
-//            context.fill(closedStart)
-//
-//            context.restoreGState()
-//
-//        }
-//
-//        let closedEndInterval = closedEndInterval()
-//        let closedEndRect = frameForClosedInterval(closedEndInterval)
-//
-//        let closedEnd = eventRect.intersection(closedEndRect)
-//        if (closedEnd.isNull == false){
-//
-//            context.interpolationQuality = .none
-//                // draw the dark background
-//            context.setFillColor(darkColor.cgColor)
-//            context.fill(closedEnd)
-//
-//                // draw the image pattern
-//            UIColor(patternImage: image).setFill()
-//            context.fill(closedEnd)
-//
-//            context.restoreGState()
-//        }
-//
-//    }
+        //    private func drawClosedTrianglePattern(context: CGContext, in drawRect: CGRect)  {
+        //
+        //        let lightColor: UIColor = .orange
+        //        let darkColor: UIColor = .yellow
+        //        let patternSize: CGFloat = 200
+        //
+        //
+        //            // make thr triangle image
+        //        let drawSize = CGSize(width: patternSize,
+        //                              height: patternSize)
+        //
+        //            // make the triangle image
+        //        UIGraphicsBeginImageContextWithOptions(drawSize, true, 0.0)
+        //
+        //            // Set the fill color for the new context
+        //        darkColor.setFill()
+        //        context.fill(CGRect(x: 0,
+        //                            y: 0,
+        //                            width: drawSize.width,
+        //                            height: drawSize.height))
+        //
+        //        let trianglePath = UIBezierPath()
+        //            // 1
+        //        trianglePath.move(to: CGPoint(x: drawSize.width / 2, y: 0))
+        //            // 2
+        //        trianglePath.addLine(to: CGPoint(x: 0, y: drawSize.height / 2))
+        //            // 3
+        //        trianglePath.addLine(to: CGPoint(x: drawSize.width, y: drawSize.height / 2))
+        //
+        //            // 4
+        //        trianglePath.move(to: CGPoint(x: 0, y: drawSize.height / 2))
+        //            // 5
+        //        trianglePath.addLine(to: CGPoint(x: drawSize.width / 2, y: drawSize.height))
+        //            // 6
+        //        trianglePath.addLine(to: CGPoint(x: 0, y: drawSize.height))
+        //
+        //            // 7
+        //        trianglePath.move(to: CGPoint(x: drawSize.width, y: drawSize.height / 2))
+        //            // 8
+        //        trianglePath.addLine(to: CGPoint(x: drawSize.width / 2, y: drawSize.height))
+        //            // 9
+        //        trianglePath.addLine(to: CGPoint(x: drawSize.width, y: drawSize.height))
+        //
+        //        lightColor.setFill()
+        //        trianglePath.fill()
+        //
+        //        guard let image = UIGraphicsGetImageFromCurrentImageContext() else {
+        //            fatalError("\(#function):\(#line) Failed to get an image from current context.")
+        //        }
+        //        UIGraphicsEndImageContext()
+        //
+        //
+        //            // left to right
+        //            // inset width
+        //        var eventRect = drawRect;
+        //        if (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft){
+        //
+        //                // right to left
+        //                // inset width by timeSidebarWidth
+        //            eventRect = CGRect(x: drawRect.minX,
+        //                               y: drawRect.minY,
+        //                               width: (drawRect.width - timeSidebarWidth),
+        //                               height: drawRect.height);
+        //
+        //        } else {
+        //
+        //                // left to right
+        //                // push x by timeSidebarWidth
+        //            eventRect = CGRect(x: (drawRect.minX + timeSidebarWidth),
+        //                               y: drawRect.minY,
+        //                               width: drawRect.width,
+        //                               height: drawRect.height);
+        //
+        //        }
+        //
+        //
+        //            // find the closed areas
+        //        let closedStartInterval = closedStartInterval()
+        //        let closedStartRect = frameForClosedInterval(closedStartInterval);
+        //
+        //        let closedStart = eventRect.intersection(closedStartRect)
+        //        if (closedStart.isNull == false){
+        //
+        //            context.interpolationQuality = .none
+        //
+        //            context.saveGState()
+        //
+        //                // draw the dark background
+        //            context.setFillColor(darkColor.cgColor)
+        //            context.fill(closedStart)
+        //
+        //                // draw the image pattern
+        //            UIColor(patternImage: image).setFill()
+        //            context.fill(closedStart)
+        //
+        //            context.restoreGState()
+        //
+        //        }
+        //
+        //        let closedEndInterval = closedEndInterval()
+        //        let closedEndRect = frameForClosedInterval(closedEndInterval)
+        //
+        //        let closedEnd = eventRect.intersection(closedEndRect)
+        //        if (closedEnd.isNull == false){
+        //
+        //            context.interpolationQuality = .none
+        //                // draw the dark background
+        //            context.setFillColor(darkColor.cgColor)
+        //            context.fill(closedEnd)
+        //
+        //                // draw the image pattern
+        //            UIColor(patternImage: image).setFill()
+        //            context.fill(closedEnd)
+        //
+        //            context.restoreGState()
+        //        }
+        //
+        //    }
     
     
     private func closedStartInterval() -> NSDateInterval {
