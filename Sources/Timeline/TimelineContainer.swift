@@ -63,8 +63,11 @@ public final class TimelineContainer: UIScrollView {
     public func scrollTo(event: EventDescriptor?, animated: Bool) {
         let allDayViewHeight = timeline.allDayViewHeight
         let padding = allDayViewHeight + 8
+        let xToScroll = timeline.xPosition(event: event, includeSidebar: true) ?? contentOffset.x
         if let yToScroll = timeline.yPosition(event: event) {
-            setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
+            let targetPoint = CGPoint(x: xToScroll,
+                                      y: yToScroll - padding)
+            setTimelineOffset(targetPoint, animated: animated)
         }
     }
     

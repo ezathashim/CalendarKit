@@ -71,6 +71,48 @@ public final class TimelineView: UIView {
         return max(firstEventPosition, beginningOfDayPosition)
     }
     
+    
+    public func xPosition(event: EventDescriptor?, includeSidebar: Bool) -> CGFloat? {
+        guard let targetEvent = event else {return nil}
+        
+        let rightToLeft = (UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft)
+        
+        var xOrigin : CGFloat = 0
+        if (rightToLeft){
+            xOrigin = bounds.width
+        }
+        if (includeSidebar == false){
+            if (rightToLeft){
+                xOrigin = xOrigin - timeSidebarWidth
+            } else {
+                xOrigin = xOrigin + timeSidebarWidth
+            }
+        }
+        
+        let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
+        if (totalColumnCount == 1){
+            return xOrigin
+        }
+        
+        let eventFrame = frameForDescriptor(targetEvent)
+        let centerX = eventFrame.origin.x + ( eventFrame.size.width / 2 );
+        let centerY = eventFrame.origin.y + ( eventFrame.size.height / 2 );
+        let eventCenterPoint = CGPoint(x: centerX,
+                                       y: centerY)
+        
+        let colIndex = columnIndexAtPoint(eventCenterPoint)
+        if (colIndex == 0){
+            return xOrigin
+        }
+        
+        let colFrame = frameForColumn(columnIndex: colIndex)
+        if (rightToLeft){
+            return colFrame.maxX
+        }
+        return colFrame.minX
+    }
+    
+    
     public func yPosition(event: EventDescriptor?) -> CGFloat? {
         guard let targetEvent = event else {return nil}
         for i in 0...regularLayoutAttributes.count{
@@ -372,20 +414,25 @@ public final class TimelineView: UIView {
             
             for colNum in 1...totalColumnCount {
                 let index = colNum - 1
+                
+                let titleView = titleViews[index]
+                
                 let title = delegate?.titleOfColumnForDate(date, columnIndex:  index)
                 if (title == nil){
+                    titleView.removeFromSuperview()
                     continue
                 }
                 let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
                 if (trimmed.count == 0){
+                    titleView.removeFromSuperview()
                     continue
                 }
                 
                     // add a view
-                let titleView = titleViews[index]
                 titleView.text = trimmed
-                self.addSubview(titleView)
-                titleViews.append(titleView)
+                if (titleView.superview != self){
+                    self.addSubview(titleView)
+                }
                 
                 let columnFrame = self.frameForColumn(columnIndex: index)
                 let fittingFrame = titleView.sizeThatFits(columnFrame.size)
