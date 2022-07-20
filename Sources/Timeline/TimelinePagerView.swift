@@ -212,10 +212,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         return controller
     }
     
+    private var isDragging : Bool = false
     private var draggingVertically : Bool = true
     private var initialContentOffset = CGPoint.zero
     public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         initialContentOffset = scrollView.contentOffset
+        isDragging = true
         
         let velocity = scrollView.panGestureRecognizer.velocity(in: scrollView.superview)
         draggingVertically = abs(velocity.x) < abs(velocity.y)
@@ -230,22 +232,26 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        var offset = scrollView.contentOffset
-        if (draggingVertically == true){
-            offset.x = initialContentOffset.x
-        } else {
-            offset.y = initialContentOffset.y
-        }
-        scrollView.contentOffset = offset
-        
-        let diffX = offset.x - initialContentOffset.x
-        let diffY = offset.y - initialContentOffset.y
-        if let event = editedEventView {
-            var frame = event.frame
-            frame.origin.x -= diffX
-            frame.origin.y -= diffY
-            event.frame = frame
-            initialContentOffset = offset
+            // need to keep track if we are dragging with isDragging
+            // since this 'scrollViewDidScroll' API is called with ANY contentOffset change
+        if (isDragging == true){
+            var offset = scrollView.contentOffset
+            if (draggingVertically == true){
+                offset.x = initialContentOffset.x
+            } else {
+                offset.y = initialContentOffset.y
+            }
+            scrollView.contentOffset = offset
+            
+            let diffX = offset.x - initialContentOffset.x
+            let diffY = offset.y - initialContentOffset.y
+            if let event = editedEventView {
+                var frame = event.frame
+                frame.origin.x -= diffX
+                frame.origin.y -= diffY
+                event.frame = frame
+                initialContentOffset = offset
+            }
         }
     }
     
@@ -261,6 +267,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        isDragging = false
         currentTimeline?.timeline.layoutColumnTitles(true, duration: 0.36)
     }
     
