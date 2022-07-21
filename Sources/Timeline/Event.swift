@@ -5,6 +5,10 @@ import UIKit
   public var isAllDay = false
   public var text = ""
   public var attributedText: NSAttributedString?
+    
+  public var secondaryText : String?
+  public var secondaryAttributedText: NSAttributedString?
+    
     //public var lineBreakMode: NSLineBreakMode?
   public var lineBreakModeValue: NSNumber?
 
@@ -17,7 +21,7 @@ import UIKit
   public var marginColor: UIColor?
     
   public var cornerImage: UIImage?
-  public var cornerImageTint: UIColor?
+  public var backgroundImage: UIImage?
     
   public var statusAttributedText: NSAttributedString?
   public var statusBackgroundColor: UIColor?

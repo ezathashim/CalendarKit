@@ -4,31 +4,19 @@ import UIKit
   @objc public var descriptor: EventDescriptor?
   public var color = SystemColors.label
   public var marginColor : UIColor?
+  private var kInset : CGFloat = 8
+  private var rightAttributedText : NSAttributedString?
+  private var leftAttributedText : NSAttributedString?
+  private var lineBreakMode : NSLineBreakMode = .byTruncatingTail
+  private var cornerImage : UIImage?
+  private var backgroundImage : UIImage?
+
+
 
   public var contentHeight: CGFloat {
-    textView.frame.height
+      bounds.height - 2 * kInset
   }
-
-    public private(set) lazy var imageView: UIImageView = {
-        let view = UIImageView()
-        view.isUserInteractionEnabled = false
-        view.backgroundColor = .clear
-        
-        var badge : UIImage?
-        
-        view.tintColor = UIColor.systemGreen;
-        view.image = badge;
-        
-        return view
-    }()
     
-  public private(set) lazy var textView: UITextView = {
-    let view = UITextView()
-    view.isUserInteractionEnabled = false
-    view.backgroundColor = .clear
-    view.isScrollEnabled = false
-    return view
-  }()
 
   /// Resize Handle views showing up when editing the event.
   /// The top handle has a tag of `0` and the bottom has a tag of `1`
@@ -47,70 +35,117 @@ import UIKit
   private func configure() {
     clipsToBounds = false
     color = tintColor
-    addSubview(textView)
-      addSubview(imageView)
     
     for (idx, handle) in eventResizeHandles.enumerated() {
       handle.tag = idx
       addSubview(handle)
     }
   }
-
-  public func updateWithDescriptor(event: EventDescriptor) {
-    if let attributedText = event.attributedText {
-      textView.attributedText = attributedText
-    } else {
-      textView.text = event.text
-      textView.textColor = event.textColor
-      textView.font = event.font
+    
+    
+    override public var frame: CGRect {
+        get {
+            return super.frame
+        }
+        set {
+            super.frame = newValue
+            setNeedsDisplay()
+        }
     }
+
+    
+    
+  public func updateWithDescriptor(event: EventDescriptor) {
       
     if let lineBreakModeValue = event.lineBreakModeValue {
         
-        var lineBreakMode: NSLineBreakMode = .byTruncatingTail
+        var breakMode: NSLineBreakMode = .byTruncatingTail
         
         switch lineBreakModeValue.intValue {
             
         case 0:
-            lineBreakMode = .byWordWrapping
+            breakMode = .byWordWrapping
             
         case 1:
-            lineBreakMode = .byCharWrapping
+            breakMode = .byCharWrapping
             
         case 2:
-            lineBreakMode = .byClipping
+            breakMode = .byClipping
             
         case 3:
-            lineBreakMode = .byTruncatingHead
+            breakMode = .byTruncatingHead
             
         case 4:
-            lineBreakMode = .byTruncatingTail
+            breakMode = .byTruncatingTail
             
         case 5:
-            lineBreakMode = .byTruncatingMiddle
+            breakMode = .byTruncatingMiddle
             
         default:
-            lineBreakMode = .byTruncatingTail
+            breakMode = .byTruncatingTail
             
         }
         
-      textView.textContainer.lineBreakMode = lineBreakMode
+      lineBreakMode = breakMode
         
     }
+      
+      
+    let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+      
+    if let attText = event.attributedText {
+        leftAttributedText = attText
+          
+    } else {
+        var alignment = NSTextAlignment.left
+        if (rightToLeft){
+            alignment = NSTextAlignment.right
+        }
+        let paragraphStyle: NSMutableParagraphStyle = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
+        paragraphStyle.lineBreakMode = lineBreakMode
+        paragraphStyle.alignment = alignment
+        let attributes = [NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                          NSAttributedString.Key.foregroundColor: event.textColor,
+                          NSAttributedString.Key.font: event.font]
+        let attText = NSAttributedString(string: event.text,
+                                        attributes: attributes)
+        leftAttributedText = attText
+    }
+      
+      if let secondaryAttText = event.secondaryAttributedText {
+          rightAttributedText = secondaryAttText
+          
+      } else {
+          if let secondaryText = event.secondaryText {
+              var alignment = NSTextAlignment.right
+              if (rightToLeft){
+                  alignment = NSTextAlignment.left
+              }
+              let paragraphStyle: NSMutableParagraphStyle = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
+              paragraphStyle.lineBreakMode = lineBreakMode
+              paragraphStyle.alignment = alignment
+              let attributes = [NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                                NSAttributedString.Key.foregroundColor: event.textColor,
+                                NSAttributedString.Key.font: event.font]
+              let attText = NSAttributedString(string: secondaryText,
+                                               attributes: attributes)
+              rightAttributedText = attText
+          }
+          
+      }
       
     descriptor = event
     backgroundColor = event.backgroundColor
     color = event.color
     marginColor = event.marginColor;
-    imageView.image = event.cornerImage;
-    imageView.tintColor = event.cornerImageTint;
+    cornerImage = event.cornerImage;
+    backgroundImage = event.backgroundImage
     eventResizeHandles.forEach{
       $0.borderColor = event.color
       $0.isHidden = event.editedEvent == nil
     }
     drawsShadow = event.editedEvent != nil
     setNeedsDisplay()
-    setNeedsLayout()
   }
   
   public func animateCreation() {
@@ -168,6 +203,100 @@ import UIKit
     context.addLine(to: CGPoint(x: x, y: (bounds).height))
     context.strokePath()
     context.restoreGState()
+      
+      
+          // should just draw the string and image instead of using a UITextView and UIImageView
+          // in old Nopali, the EventView does all this, so I could just copy it
+      let contentFrame = CGRect(x: rect.minX + kInset,
+                                y: rect.minY + kInset,
+                                width: rect.width - 2 * kInset,
+                                height: rect.height - 2 * kInset)
+      
+      
+      let backgroundImageInset = kInset / 2
+      var backgroundImageFrame = contentFrame.insetBy(dx: backgroundImageInset, dy: backgroundImageInset)
+      let backgroundImageWidth = min(backgroundImageFrame.width, backgroundImageFrame.height)
+      let center = CGPoint(x: backgroundImageFrame.midX, y: backgroundImageFrame.midY)
+      backgroundImageFrame = CGRect(x: center.x - backgroundImageWidth / 2,
+                                    y: center.y - backgroundImageWidth / 2,
+                                    width: backgroundImageWidth,
+                                    height: backgroundImageWidth)
+      
+      backgroundImage?.draw(in: backgroundImageFrame)
+      
+      let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+      
+      let leftAttText = leftAttributedText
+      let rightAttText = rightAttributedText
+      
+      
+        // draw the left text first
+      leftAttText?.draw(with: contentFrame,
+                       options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
+                       context: nil)
+
+          
+      let leftTextRect = leftAttText?.boundingRect(with: CGSize(width: contentFrame.width,
+                                                                height:  CGFloat.greatestFiniteMagnitude),
+                                                   options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                  context: nil) ?? CGRect(x: contentFrame.minY,
+                                                                          y: contentFrame.minY,
+                                                                          width: 0,
+                                                                          height: contentFrame.size.height)
+      
+          // get the badge space
+      var imageWidth = 32.0;
+      if ((contentFrame.width - leftTextRect.width) < imageWidth){
+          imageWidth = 0
+      }
+      if (contentFrame.height < imageWidth){
+          imageWidth = 0
+      }
+      
+      if (cornerImage == nil){
+          imageWidth = 0
+      }
+      
+      
+        // left to right
+      var rightTextRect = CGRect(x: leftTextRect.maxX + kInset,
+                                 y: contentFrame.minY,
+                                 width: contentFrame.width - leftTextRect.width - imageWidth,
+                                 height: contentFrame.size.height)
+      
+      if (rightToLeft == true) {
+          rightTextRect = CGRect(x: contentFrame.minX + imageWidth,
+                                 y: contentFrame.minY,
+                                 width: contentFrame.width - leftTextRect.width - imageWidth - kInset,
+                                 height: contentFrame.size.height)
+      }
+      
+      
+      rightAttText?.draw(with: rightTextRect,
+                        options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
+                        context: nil)
+      
+      
+        
+      if (imageWidth > 8){
+              // left to right
+          var imageFrame = CGRect(x: rightTextRect.maxX + kInset,
+                                  y: contentFrame.origin.y - kInset * 1.1,
+                                  width: imageWidth,
+                                  height: imageWidth)
+          
+          if (rightToLeft == true) {
+              imageFrame = CGRect(x: contentFrame.maxX - imageWidth - kInset,
+                                  y: contentFrame.origin.y - kInset * 1.1,
+                                  width: imageWidth,
+                                  height: imageWidth)
+          }
+          
+          imageFrame = imageFrame.insetBy(dx: 4, dy: 4)
+          
+          cornerImage?.draw(in: imageFrame)
+      }
+      
       
       
           // status string
@@ -235,75 +364,6 @@ import UIKit
 
   override open func layoutSubviews() {
     super.layoutSubviews()
-    textView.frame = {
-        if UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft {
-            return CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
-        } else {
-            return CGRect(x: bounds.minX + 3, y: bounds.minY, width: bounds.width - 3, height: bounds.height)
-        }
-    }()
-    if frame.minY < 0 {
-      var textFrame = textView.frame;
-      textFrame.origin.y = frame.minY * -1;
-      textFrame.size.height += frame.minY;
-      textView.frame = textFrame;
-    }
-      
-      
-      let badgeWidth = 32.0;
-      let badgeInset = 6.0;
-      
-      let badgeTotalWidth = (badgeWidth)
-      let availableBadgeWidth = (textView.frame.size.height >= badgeTotalWidth)
-      let availableBadgeHeight = ((textView.frame.size.width * 0.5) >= badgeTotalWidth)
-      let availableBadgeArea = ((availableBadgeWidth == true) && (availableBadgeHeight == true))
-      
-      imageView.isHidden = ((imageView.image == nil) || (availableBadgeArea == false));
-      
-      if (imageView.isHidden == false){
-          
-          
-          let textFrame : CGRect = textView.frame
-          
-              // should account for text Direction
-              // if left to right, then inset the width
-              // if right to left, then inset the origin
-              
-          if UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft {
-              
-              let insetFrame : CGRect = CGRect(x: textFrame.origin.x + badgeWidth,
-                                               y: textFrame.origin.y,
-                                               width: textFrame.size.width - badgeWidth,
-                                               height: textFrame.size.height)
-              
-              let imageFrame = CGRect(x: textFrame.origin.x,
-                                      y: textFrame.origin.y + badgeInset,
-                                      width: badgeWidth - badgeInset * 2,
-                                      height: badgeWidth - badgeInset * 2)
-              
-              textView.frame = insetFrame;
-              imageView.frame = imageFrame;
-              
-          } else {
-              
-              let insetFrame : CGRect = CGRect(x: textFrame.origin.x,
-                                               y: textFrame.origin.y,
-                                               width: textFrame.size.width - badgeWidth,
-                                               height: textFrame.size.height)
-              
-              let imageFrame = CGRect(x: insetFrame.origin.x +
-                                      insetFrame.size.width +
-                                      badgeInset,
-                                      y: textFrame.origin.y + badgeInset,
-                                      width: badgeWidth - badgeInset * 2,
-                                      height: badgeWidth - badgeInset * 2)
-              
-              textView.frame = insetFrame;
-              imageView.frame = imageFrame;
-          }
-          
-      }
-      
     let first = eventResizeHandles.first
     let last = eventResizeHandles.last
     let radius: CGFloat = 40
@@ -320,6 +380,7 @@ import UIKit
       applySketchShadow(alpha: 0.13,
                         blur: 10)
     }
+      
   }
 
   private func applySketchShadow(

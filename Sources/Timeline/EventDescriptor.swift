@@ -7,6 +7,9 @@ import UIKit
   var text: String {get}
   var attributedText: NSAttributedString? {get}
     
+  var secondaryText: String? {get}
+  var secondaryAttributedText: NSAttributedString? {get}
+    
         // for @objc I cannot use NSLineBreakMode variable
         // convert the code to use an NSNumber instead
   //var lineBreakMode: NSLineBreakMode? {get}
@@ -23,7 +26,8 @@ import UIKit
         // can draw an image at the tail end of the text
         // useful for badging the event
   var cornerImage: UIImage? {get}
-  var cornerImageTint: UIColor? {get}
+  var backgroundImage: UIImage? {get}
+
     
         // will draw a round rect in the center of the EventView
         // useful to highlight things in the event
