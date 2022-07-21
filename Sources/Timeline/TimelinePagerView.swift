@@ -137,6 +137,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     private func configure() {
+            // so that the editedEventView does not draw beyond bounds during dragging
+        clipsToBounds = true
+        
         let viewController = configureTimelineController(date: Date())
         pagingViewController.setViewControllers([viewController], direction: .forward, animated: false, completion: nil)
         pagingViewController.dataSource = self
