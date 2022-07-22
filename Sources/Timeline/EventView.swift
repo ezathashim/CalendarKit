@@ -18,6 +18,35 @@ import UIKit
     }
     
     
+    public func fittingHeightFor(maxTextLines: NSInteger) -> CGFloat {
+            // if zero or less, use all lines
+        guard var leftAttText = leftAttributedText else {
+            return kInset * 2
+        }
+        
+        if (maxTextLines > 0){
+            let components = leftAttText.string.components(separatedBy: "\n")
+            var strings = [String]()
+            for string in components {
+                if (strings.count == maxTextLines){
+                    break
+                }
+                strings.append(string)
+            }
+            let attributes = leftAttText.attributes(at: 0, effectiveRange: nil)
+            let string = strings.joined(separator: "\n")
+            leftAttText = NSAttributedString.init(string: string, attributes: attributes)
+        }
+        
+        let leftTextRect = leftAttText.boundingRect(with: CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                                 height:  CGFloat.greatestFiniteMagnitude),
+                                                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                    context: nil)
+        
+        return leftTextRect.height + kInset*2
+    }
+    
+    
         /// Resize Handle views showing up when editing the event.
         /// The top handle has a tag of `0` and the bottom has a tag of `1`
     public private(set) lazy var eventResizeHandles = [EventResizeHandleView(), EventResizeHandleView()]
