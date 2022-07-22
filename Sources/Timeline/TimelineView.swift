@@ -54,6 +54,7 @@ public final class TimelineView: UIView {
             allDayView.scrollToBottom()
             
             setNeedsLayout()
+            setNeedsDisplay()
         }
     }
     private var pool = ReusePool<EventView>()
@@ -967,7 +968,6 @@ public final class TimelineView: UIView {
         layoutEvents()
         layoutNowLine()
         layoutAllDayEvents()
-        setNeedsDisplay()
     }
     
     private func layoutNowLine() {
