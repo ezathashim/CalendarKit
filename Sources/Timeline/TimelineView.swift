@@ -159,6 +159,19 @@ public final class TimelineView: UIView {
         
         let enclosingBounds = enclosingView.convert(enclosingView.bounds, to: self)
         let visibleRect = self.bounds.intersection(enclosingBounds)
+        if (visibleRect.origin.y.isNaN){
+            return nil
+        }
+        if (visibleRect.origin.y.isInfinite){
+            return nil
+        }
+        if (visibleRect.height.isNaN){
+            return nil
+        }
+        if (visibleRect.height.isInfinite){
+            return nil
+        }
+        
         
         let startDate = yToDate(visibleRect.origin.y)
         let endDate = yToDate(visibleRect.origin.y + visibleRect.size.height)

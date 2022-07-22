@@ -434,6 +434,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
+    private var pinchStartInterval : DateInterval?
     @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
         
         if (allowsZooming == false){
@@ -473,6 +474,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
             }
             
+            pinchStartInterval = currentTimeline?.container.timeline.visibleInterval()
             
             return;
         }
@@ -492,23 +494,15 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     
                     let zoomedTimelineHeight = 24 * style.verticalDiff * heightScaleFactor;
                     
-                    
                         // need to scroll while pinching
-                    guard let container = currentTimeline?.container else {
-                        sender.scale = 1.0;
-                        return
-                    }
-                    
-                    var scrollBounds = container.bounds
                         // we have increased the height of the timeline
                         // the bounds y will increase by 0.5 of this height change
-                    let heightDiff = (zoomedTimelineHeight - currentTimelineHeight)
-                    var yZoomed = scrollBounds.origin.y + (heightDiff / 2)
-                    if (yZoomed < 0){
-                        yZoomed = 0
+                    let diffY = (zoomedTimelineHeight - currentTimelineHeight)/2
+                    
+                    if var offset = currentTimeline?.container.contentOffset{
+                        offset.y = offset.y + diffY
+                        currentTimeline?.container.contentOffset = offset
                     }
-                    scrollBounds.origin.y = round(yZoomed)
-                    container.bounds = scrollBounds
                     
                     
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
@@ -533,8 +527,14 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         if (sender.state == .ended) {
             
-                // TODO
-                // tell the delegate that the heightScaleFactor has changed
+            if let date = pinchStartInterval?.start{
+                if let container = currentTimeline?.container{
+                    let hourComponent = container.timeline.calendar.component(.hour, from: date)
+                    let minuteComponent = container.timeline.calendar.component(.minute, from: date)
+                    
+                    container.scrollTo(hour24: Float(hourComponent), minute: Float(minuteComponent))
+                }
+            }
             
             return;
         }
