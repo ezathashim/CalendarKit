@@ -14,7 +14,7 @@ import UIKit
     
     
     public var contentHeight: CGFloat {
-        bounds.height - 2 * kInset
+        bounds.height - (2*kInset)
     }
     
     
@@ -280,7 +280,7 @@ import UIKit
                                                                              height: contentFrame.size.height)
         
             // get the badge space
-        var imageWidth = 26.0
+        var imageWidth = 20.0
         if ((contentFrame.width - leftTextRect.width) < imageWidth){
             imageWidth = 0
         }
@@ -317,28 +317,27 @@ import UIKit
         
         if (imageWidth > 8){
             
-            var sourceSize = cornerImage?.size ?? CGSize(width: 0, height: 0)
-            if (sourceSize.width == 0){
-                sourceSize.width = 0.0001
-            }
-            let imageHeight = imageWidth * sourceSize.height / sourceSize.width
-            
                 // left to right
             var imageFrame = CGRect(x: rightTextRect.maxX + kInset,
                                     y: contentFrame.origin.y,
                                     width: imageWidth,
-                                    height: imageHeight)
+                                    height: contentFrame.height)
             
             if (rightToLeft == true) {
                 imageFrame = CGRect(x: contentFrame.maxX - imageWidth - kInset,
                                     y: contentFrame.origin.y,
                                     width: imageWidth,
-                                    height: imageHeight)
+                                    height: contentFrame.height)
             }
             
-            imageFrame = imageFrame.insetBy(dx: 4, dy: 4)
+            imageFrame = imageFrame.insetBy(dx: 2, dy: 0)
             
-            cornerImage?.draw(in: imageFrame)
+            if let badgeImage = cornerImage{
+                imageFrame = maximalRectWithoutChangingAspectRatio(boundary: imageFrame, shape : badgeImage.size)
+                imageFrame.origin.y = contentFrame.origin.y
+                badgeImage.draw(in: imageFrame)
+            }
+            
         }
         
         
