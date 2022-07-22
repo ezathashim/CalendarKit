@@ -488,22 +488,21 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 if (pinchGestureIsVertical) {
                     
                     
-                    let currentTimelineHeight = 24 * style.verticalDiff * heightScaleFactor;
+                    var currentTimelineHeight = 24 * style.verticalDiff * heightScaleFactor
+                    if (currentTimelineHeight.isZero == true){
+                        currentTimelineHeight = CGFloat.leastNonzeroMagnitude
+                    }
                     
                     heightScaleFactor = heightScaleFactor * sender.scale;
                     
                     let zoomedTimelineHeight = 24 * style.verticalDiff * heightScaleFactor;
                     
-                        // need to scroll while pinching
                         // we have increased the height of the timeline
-                        // the bounds y will increase by 0.5 of this height change
-                    let diffY = (zoomedTimelineHeight - currentTimelineHeight)/2
-                    
+                        // keep the same relative yPoint
                     if var offset = currentTimeline?.container.contentOffset{
-                        offset.y = offset.y + diffY
+                        offset.y = offset.y * zoomedTimelineHeight/currentTimelineHeight
                         currentTimeline?.container.contentOffset = offset
                     }
-                    
                     
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
                     sender.scale = 1.0;

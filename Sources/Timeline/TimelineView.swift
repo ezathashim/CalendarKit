@@ -447,6 +447,7 @@ public final class TimelineView: UIView {
                 if (titleView.superview != self){
                     self.addSubview(titleView)
                 }
+                titleView.superview?.bringSubviewToFront(titleView)
                 
                 let columnFrame = self.frameForColumn(columnIndex: index)
                 let fittingFrame = titleView.sizeThatFits(columnFrame.size)
@@ -1134,6 +1135,9 @@ public final class TimelineView: UIView {
                 addSubview(newView)
             }
             eventViews.append(newView)
+        }
+        for titleView in titleViews {
+            titleView.superview?.bringSubviewToFront(titleView)
         }
     }
     
