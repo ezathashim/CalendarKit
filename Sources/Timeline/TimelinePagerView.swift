@@ -321,7 +321,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let validEvents = events.filter{$0.dateInterval.intersects(day)}
         timeline.layoutAttributes = validEvents.map(EventLayoutAttributes.init)
         
-        timeline.layoutColumnTitles(false, duration: 0)
+        if isPinching == false{
+            timeline.layoutColumnTitles(false, duration: 0)
+        }
+        
         
     }
     
@@ -456,8 +459,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
+    private var isPinching : Bool = false
     @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
         
+        isPinching = false
         if (allowsZooming == false){
             return
         }
@@ -495,6 +500,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
             }
             
+            isPinching = true
             currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.24)
             
             return;
@@ -551,6 +557,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         if (sender.state == .ended) {
             
+            isPinching = false
             currentTimeline?.container.timeline.layoutColumnTitles(true, duration: 0.36)
             
             return;
