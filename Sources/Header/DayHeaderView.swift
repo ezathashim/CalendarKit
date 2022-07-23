@@ -94,6 +94,16 @@ public final class DayHeaderView: UIView, DaySelectorDelegate, DayViewStateUpdat
   }
   
     public func updateStyle(_ newStyle: DayHeaderStyle) {
+        if Thread.current.isMainThread{
+            self.style = newStyle
+            self.daySymbolsView.updateStyle(self.style.daySymbols)
+            self.swipeLabelView.updateStyle(self.style.swipeLabel)
+            (self.pagingViewController.viewControllers as? [DaySelectorController])?.forEach{$0.updateStyle(newStyle.daySelector)}
+            self.backgroundColor = self.style.backgroundColor
+            self.separator.backgroundColor = self.style.separatorColor
+            
+            return
+        }
         
         DispatchQueue.main.async {
             self.style = newStyle

@@ -155,6 +155,18 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func updateStyle(_ newStyle: TimelineStyle) {
+        if Thread.current.isMainThread{
+            style = newStyle
+            style.minimumEventDurationInMinutesWhileEditing = 15;
+            pagingViewController.viewControllers?.forEach({ (timelineContainer) in
+                if let controller = timelineContainer as? TimelineContainerController {
+                    updateStyleOfTimelineContainer(controller: controller)
+                }
+            })
+            pagingViewController.view.backgroundColor = self.style.backgroundColor
+            
+            return
+        }
         
         DispatchQueue.main.async {
             self.style = newStyle
@@ -275,6 +287,16 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func reloadData() {
+        if Thread.current.isMainThread{
+            pagingViewController.children.forEach({ (controller) in
+                if let controller = controller as? TimelineContainerController {
+                    updateTimeline(controller.timeline)
+                }
+            })
+            
+            return
+        }
+        
         DispatchQueue.main.async {
             self.pagingViewController.children.forEach({ (controller) in
                 if let controller = controller as? TimelineContainerController {
@@ -488,20 +510,26 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 if (pinchGestureIsVertical) {
                     
                     
-                    var currentTimelineHeight = 24 * style.verticalDiff * heightScaleFactor
+                    let baselineHeight = style.verticalInset * 2 + style.verticalDiff * 24
+                    
+                    var currentTimelineHeight = baselineHeight * heightScaleFactor
                     if (currentTimelineHeight.isZero == true){
                         currentTimelineHeight = CGFloat.leastNonzeroMagnitude
                     }
                     
                     heightScaleFactor = heightScaleFactor * sender.scale;
                     
-                    let zoomedTimelineHeight = 24 * style.verticalDiff * heightScaleFactor;
+                    let zoomedTimelineHeight = baselineHeight * heightScaleFactor
+                    
+                    let hDiffRatio = zoomedTimelineHeight/currentTimelineHeight
                     
                         // we have increased the height of the timeline
                         // keep the same relative yPoint
                     if var offset = currentTimeline?.container.contentOffset{
-                        offset.y = offset.y * zoomedTimelineHeight/currentTimelineHeight
-                        currentTimeline?.container.contentOffset = offset
+                        if hDiffRatio.isZero == false{
+                            offset.y = offset.y * hDiffRatio
+                            currentTimeline?.container.contentOffset = offset
+                        }
                     }
                     
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
