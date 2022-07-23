@@ -456,7 +456,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
-    private var pinchStartInterval : DateInterval?
     @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
         
         if (allowsZooming == false){
@@ -496,7 +495,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
             }
             
-            pinchStartInterval = currentTimeline?.container.timeline.visibleInterval()
             currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.24)
             
             return;
@@ -553,15 +551,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         if (sender.state == .ended) {
             
-            if let date = pinchStartInterval?.start{
-                if let container = currentTimeline?.container{
-                    let hourComponent = container.timeline.calendar.component(.hour, from: date)
-                    let minuteComponent = container.timeline.calendar.component(.minute, from: date)
-                    
-                    container.scrollTo(hour24: Float(hourComponent), minute: Float(minuteComponent))
-                    container.timeline.layoutColumnTitles(true, duration: 0.36)
-                }
-            }
+            currentTimeline?.container.timeline.layoutColumnTitles(true, duration: 0.36)
             
             return;
         }
