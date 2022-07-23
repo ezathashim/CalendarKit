@@ -509,17 +509,15 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
                 if (pinchGestureIsVertical) {
                     
-                    
-                    let baselineHeight = style.verticalInset * 2 + style.verticalDiff * 24
-                    
-                    var currentTimelineHeight = baselineHeight * heightScaleFactor
+                                        
+                    var currentTimelineHeight = style.verticalInset * 2 + style.verticalDiff * 24 * heightScaleFactor
                     if (currentTimelineHeight.isZero == true){
                         currentTimelineHeight = CGFloat.leastNonzeroMagnitude
                     }
                     
                     heightScaleFactor = heightScaleFactor * sender.scale;
                     
-                    let zoomedTimelineHeight = baselineHeight * heightScaleFactor
+                    let zoomedTimelineHeight = style.verticalInset * 2 + style.verticalDiff * 24 * heightScaleFactor
                     
                     let hDiffRatio = zoomedTimelineHeight/currentTimelineHeight
                     
