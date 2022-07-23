@@ -497,6 +497,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
             
             pinchStartInterval = currentTimeline?.container.timeline.visibleInterval()
+            currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.24)
             
             return;
         }
@@ -558,6 +559,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     let minuteComponent = container.timeline.calendar.component(.minute, from: date)
                     
                     container.scrollTo(hour24: Float(hourComponent), minute: Float(minuteComponent))
+                    container.timeline.layoutColumnTitles(true, duration: 0.36)
                 }
             }
             
