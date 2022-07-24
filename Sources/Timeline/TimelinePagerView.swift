@@ -62,7 +62,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     public var heightScaleFactor: CGFloat {
         get { return _heightScaleFactor }
         set {
-            
             var factor = newValue
             if (factor < 2.0) {
                 factor = 2.0
@@ -70,14 +69,19 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             if (factor > 10.0) {
                 factor = 10.0
             }
-            _heightScaleFactor = factor
+            
+                // keep 2 decimal places
+            let didChange = round(factor * 100) != round(_heightScaleFactor * 100)
+            
+            _heightScaleFactor = round(factor * 100) / 100.0
             
                 // mention the change to the delegate
-            delegate?.timelinePagerDidChangeHeightScaleFactor(timelinePager: self)
-            
-            updateStyle(style)
-            reloadData()
-            
+            if (didChange == true){
+                delegate?.timelinePagerDidChangeHeightScaleFactor(timelinePager: self)
+                
+                updateStyle(style)
+                reloadData()
+            }
         }
     }
     
@@ -230,21 +234,19 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     private var isDragging : Bool = false
     private var draggingVertically : Bool = true
     private var initialContentOffset = CGPoint.zero
+    private var previousDraggingOffset = CGPoint.zero
     public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         initialContentOffset = scrollView.contentOffset
+        previousDraggingOffset = scrollView.contentOffset
         isDragging = true
         
         let velocity = scrollView.panGestureRecognizer.velocity(in: scrollView.superview)
         draggingVertically = abs(velocity.x) < abs(velocity.y)
-        if (draggingVertically){
-            currentTimeline?.timeline.hideColumnTitles(true, duration: 0.24)
-        }
         
         if (velocity.equalTo(CGPoint.zero)){
             scrollViewDidEndScrollingAnimation(scrollView)
         }
     }
-    
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
             // need to keep track if we are dragging with isDragging
@@ -258,6 +260,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
             scrollView.contentOffset = offset
             
+                // adjust the columnTitles
+            currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0, yDiff: offset.y - previousDraggingOffset.y)
+            previousDraggingOffset = offset
+            
+            
             let diffX = offset.x - initialContentOffset.x
             let diffY = offset.y - initialContentOffset.y
             if let event = editedEventView {
@@ -267,6 +274,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 event.frame = frame
                 initialContentOffset = offset
             }
+        }
+    }
+    
+    public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+        if (draggingVertically == true){
+            currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.2)
         }
     }
     
@@ -282,8 +295,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        isDragging = false
-        currentTimeline?.timeline.layoutColumnTitles(true, duration: 0.36)
+        if (draggingVertically == true){
+            isDragging = false
+            currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.2)
+        }
     }
     
     public func reloadData() {
@@ -514,7 +529,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
                 if (pinchGestureIsVertical) {
                     
-                                        
+                    
                     var currentTimelineHeight = style.verticalInset * 2 + style.verticalDiff * 24 * heightScaleFactor
                     if (currentTimelineHeight.isZero == true){
                         currentTimelineHeight = CGFloat.leastNonzeroMagnitude
