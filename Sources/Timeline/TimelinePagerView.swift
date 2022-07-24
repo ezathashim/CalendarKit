@@ -264,7 +264,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0, yDiff: offset.y - previousDraggingOffset.y)
             previousDraggingOffset = offset
             
-            
             let diffX = offset.x - initialContentOffset.x
             let diffY = offset.y - initialContentOffset.y
             if let event = editedEventView {
@@ -284,7 +283,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        
         if (decelerate == false){
             scrollViewDidEndScrollingAnimation(scrollView)
         }
@@ -295,10 +293,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        if (draggingVertically == true){
-            isDragging = false
-            currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.2)
-        }
+        isDragging = false
+        currentTimeline?.container.timeline.layoutColumnTitles(true, duration: 0.20)
     }
     
     public func reloadData() {
