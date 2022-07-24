@@ -219,13 +219,14 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     private func configureTimelineController(date: Date) -> TimelineContainerController {
         let controller = TimelineContainerController()
-        updateStyleOfTimelineContainer(controller: controller)
         let timeline = controller.timeline
         timeline.longPressGestureRecognizer.addTarget(self, action: #selector(timelineDidLongPress(_:)))
         timeline.delegate = self
         timeline.calendar = calendar
         timeline.eventEditingSnappingBehavior = eventEditingSnappingBehavior
+        timeline.hideColumnTitles(false, duration: 0)
         timeline.date = date.dateOnly(calendar: calendar)
+        updateStyleOfTimelineContainer(controller: controller)
         controller.container.delegate = self
         updateTimeline(timeline)
         return controller
