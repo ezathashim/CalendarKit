@@ -485,7 +485,6 @@ public final class TimelineView: UIView {
             }
         }) {_ in
             
-            self.showColumnTitles(animated, duration: finalDuration)
             
         }
     }

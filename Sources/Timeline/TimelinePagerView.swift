@@ -223,7 +223,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         timeline.delegate = self
         timeline.calendar = calendar
         timeline.eventEditingSnappingBehavior = eventEditingSnappingBehavior
-        timeline.hideColumnTitles(false, duration: 0)
         timeline.date = date.dateOnly(calendar: calendar)
         updateStyleOfTimelineContainer(controller: controller)
         controller.container.delegate = self
@@ -294,7 +293,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         isDragging = false
-        currentTimeline?.container.timeline.showColumnTitles(true, duration: 0.36)
+        currentTimeline?.container.timeline.layoutColumnTitles(false, duration: 0)
+        currentTimeline?.container.timeline.showColumnTitles(true, duration: 0.3)
     }
     
     
