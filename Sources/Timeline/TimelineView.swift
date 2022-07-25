@@ -340,6 +340,20 @@ public final class TimelineView: UIView {
     }
     
     
+    public func offsetColumnTitle(xFactor: CGFloat, yFactor: CGFloat){
+        for titleView in titleViews {
+            var frame = titleView.frame
+            if (xFactor.isZero == false){
+                frame.origin.x = frame.origin.x * xFactor
+            }
+            if (yFactor.isZero == false){
+                frame.origin.y = frame.origin.y * yFactor
+            }
+            titleView.frame = frame
+        }
+    }
+    
+    
     override public var frame: CGRect {
         get {
             return super.frame

@@ -158,31 +158,30 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
     }
     
+    
     public func updateStyle(_ newStyle: TimelineStyle) {
         if Thread.current.isMainThread{
-            style = newStyle
-            style.minimumEventDurationInMinutesWhileEditing = 15;
-            pagingViewController.viewControllers?.forEach({ (timelineContainer) in
-                if let controller = timelineContainer as? TimelineContainerController {
-                    updateStyleOfTimelineContainer(controller: controller)
-                }
-            })
-            pagingViewController.view.backgroundColor = self.style.backgroundColor
-            
+            reallyUpdateStyle(newStyle);
             return
         }
         
         DispatchQueue.main.async {
-            self.style = newStyle
-            self.style.minimumEventDurationInMinutesWhileEditing = 15;
-            self.pagingViewController.viewControllers?.forEach({ (timelineContainer) in
-                if let controller = timelineContainer as? TimelineContainerController {
-                    self.updateStyleOfTimelineContainer(controller: controller)
-                }
-            })
-            self.pagingViewController.view.backgroundColor = self.style.backgroundColor
+            self.reallyUpdateStyle(newStyle)
         }
     }
+    
+    
+    public func reallyUpdateStyle(_ newStyle: TimelineStyle) {
+        style = newStyle
+        style.minimumEventDurationInMinutesWhileEditing = 15;
+        pagingViewController.viewControllers?.forEach({ (timelineContainer) in
+            if let controller = timelineContainer as? TimelineContainerController {
+                updateStyleOfTimelineContainer(controller: controller)
+            }
+        })
+        pagingViewController.view.backgroundColor = self.style.backgroundColor
+    }
+    
     
     private func updateStyleOfTimelineContainer(controller: TimelineContainerController) {
         let container = controller.container
@@ -295,28 +294,32 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         isDragging = false
-        currentTimeline?.container.timeline.layoutColumnTitles(true, duration: 0.20)
+        currentTimeline?.container.timeline.showColumnTitles(true, duration: 0.36)
     }
+    
     
     public func reloadData() {
         if Thread.current.isMainThread{
-            pagingViewController.children.forEach({ (controller) in
-                if let controller = controller as? TimelineContainerController {
-                    updateTimeline(controller.timeline)
-                }
-            })
-            
+            reallyReloadData()
             return
         }
         
         DispatchQueue.main.async {
-            self.pagingViewController.children.forEach({ (controller) in
-                if let controller = controller as? TimelineContainerController {
-                    self.updateTimeline(controller.timeline)
-                }
-            })
+            self.reallyReloadData()
         }
     }
+    
+    
+    public func reallyReloadData() {
+        pagingViewController.children.forEach({ (controller) in
+            if let controller = controller as? TimelineContainerController {
+                updateTimeline(controller.timeline)
+                controller.timeline.layoutColumnTitles(true, duration: 0.36)
+            }
+        })
+    }
+    
+    
     
     override public func layoutSubviews() {
         super.layoutSubviews()
@@ -332,12 +335,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let day = DateInterval(start: date, end: end)
         let validEvents = events.filter{$0.dateInterval.intersects(day)}
         timeline.layoutAttributes = validEvents.map(EventLayoutAttributes.init)
-        
-        if isPinching == false{
-            timeline.layoutColumnTitles(false, duration: 0)
-        }
-        
-        
     }
     
     public func scrollToFirstEventIfNeeded(animated: Bool) {
@@ -471,10 +468,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
-    private var isPinching : Bool = false
+
     @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
         
-        isPinching = false
+        
         if (allowsZooming == false){
             return
         }
@@ -512,8 +509,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
             }
             
-            isPinching = true
-            currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.24)
             
             return;
         }
@@ -547,6 +542,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                         }
                     }
                     
+                    
+                        // update the timeline titles
+                    currentTimeline?.container.timeline.offsetColumnTitle(xFactor: 0, yFactor: hDiffRatio)
+                    
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
                     sender.scale = 1.0;
                     
@@ -569,7 +568,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         if (sender.state == .ended) {
             
-            isPinching = false
             currentTimeline?.container.timeline.layoutColumnTitles(true, duration: 0.36)
             
             return;
