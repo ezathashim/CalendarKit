@@ -320,16 +320,37 @@ public final class TimelineView: UIView {
     
     
         // show the column titles
-    private var titleViews = [TimelineColumnTitleView]()
+    private var _titleViews = [TimelineColumnTitleView]()
     
-    public func discardTitles() {
-        for titleView in titleViews {
-            titleView.removeFromSuperview()
+    
+    private func allTitleViews() ->[TimelineColumnTitleView]{
+        var array = [TimelineColumnTitleView]()
+        
+        guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
+            discardTitles()
+            return array
         }
-        titleViews.removeAll()
+        while (_titleViews.count < totalColumnCount){
+            _titleViews.append(TimelineColumnTitleView())
+        }
+        while (_titleViews.count > totalColumnCount){
+            _titleViews.last?.removeFromSuperview()
+            _titleViews.removeLast()
+        }
+        array.append(contentsOf: _titleViews)
+        return array
     }
     
     
+    
+    public func discardTitles() {
+        for titleView in _titleViews {
+            titleView.removeFromSuperview()
+        }
+        _titleViews.removeAll()
+    }
+    
+    private var animationDuration : CGFloat = 0.32
     public func offsetColumnTitle(xDiff: CGFloat, yDiff: CGFloat, animated: Bool){
         if (animated == false){
             UIView.performWithoutAnimation {
@@ -337,21 +358,20 @@ public final class TimelineView: UIView {
             }
             return
         }
-        
-        reallyOffsetColumnTitle(xDiff: xDiff, yDiff: yDiff)
+        UIView.animate(withDuration: animationDuration) {
+            self.reallyOffsetColumnTitle(xDiff: xDiff, yDiff: yDiff)
+        }
     }
     
     
     private func reallyOffsetColumnTitle(xDiff: CGFloat, yDiff: CGFloat){
-        for titleView in titleViews {
+        for titleView in allTitleViews() {
             var frame = titleView.frame
             frame.origin.x = frame.origin.x + xDiff
             frame.origin.y = frame.origin.y + yDiff
             titleView.frame = frame
         }
     }
-    
-    
     
     
     public func offsetColumnTitle(xFactor: CGFloat, yFactor: CGFloat, animated: Bool){
@@ -361,13 +381,15 @@ public final class TimelineView: UIView {
             }
             return
         }
+        UIView.animate(withDuration: animationDuration) {
+            self.reallyOffsetColumnTitle(xFactor: xFactor, yFactor: yFactor)
+        }
         
-        reallyOffsetColumnTitle(xFactor: xFactor, yFactor: yFactor)
     }
     
     
     private func reallyOffsetColumnTitle(xFactor: CGFloat, yFactor: CGFloat){
-        for titleView in titleViews {
+        for titleView in allTitleViews() {
             var frame = titleView.frame
             if (xFactor.isZero == false){
                 frame.origin.x = frame.origin.x * xFactor
@@ -402,15 +424,16 @@ public final class TimelineView: UIView {
             }
             return
         }
-        
-        reallyHideColumnTitles()
-        
+        UIView.animate(withDuration: animationDuration) {
+            self.reallyHideColumnTitles()
+        }
     }
     
     
     private func reallyHideColumnTitles() {
         var needToHide = false
-        for view in titleViews {
+        let allTitleViews = allTitleViews()
+        for view in allTitleViews{
             if (view.alpha.isZero == false){
                 needToHide = true
                 break
@@ -419,11 +442,12 @@ public final class TimelineView: UIView {
         if (needToHide == false){
             return
         }
-        
-        for titleView in self.titleViews {
+        for titleView in allTitleViews {
+            var frame = titleView.frame
+            frame.origin.y = 0
+            titleView.frame = frame
             titleView.alpha = 0
         }
-        
     }
     
     
@@ -434,14 +458,16 @@ public final class TimelineView: UIView {
             }
             return
         }
-        
-        reallyShowColumnTitles()
+        UIView.animate(withDuration: animationDuration) {
+            self.reallyShowColumnTitles()
+        }
     }
     
     
     public func reallyShowColumnTitles() {
         var needToShow = false
-        for view in titleViews {
+        let allTitleViews = allTitleViews()
+        for view in allTitleViews {
             if (view.alpha.isZero == true){
                 needToShow = true
                 break
@@ -451,79 +477,65 @@ public final class TimelineView: UIView {
             return
         }
         
-        
-        for titleView in self.titleViews {
+        let viewInset : CGFloat = 8
+        let topDate = visibleInterval()?.start ?? yToDate(1);
+        let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
+        for titleView in allTitleViews{
+            var frame = titleView.frame
+            frame.origin.y = yPoint
+            titleView.frame = frame
             titleView.alpha = 1
         }
-        
     }
     
     public func layoutColumnTitles(_ animated : Bool) {
-        
         if (animated == false){
             UIView.performWithoutAnimation {
                 reallyLayoutColumnTitles()
             }
             return
         }
-        
-        reallyLayoutColumnTitles()
+        UIView.animate(withDuration: animationDuration) {
+            self.reallyLayoutColumnTitles()
+        }
     }
     
     
     private func reallyLayoutColumnTitles() {
-        
-        guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
-            discardTitles()
-            return
-        }
-        
-        while (titleViews.count < totalColumnCount){
-            titleViews.append(TimelineColumnTitleView())
-        }
-        
-        while (titleViews.count > totalColumnCount){
-            titleViews.removeLast()
-        }
-        
-        
         let viewInset : CGFloat = 8
         let topDate = visibleInterval()?.start ?? yToDate(1);
         let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
         
-        
-        for colNum in 1...totalColumnCount {
-            let index = colNum - 1
-            
-            let titleView = titleViews[index]
-            
-            let title = delegate?.titleOfColumnForDate(date, columnIndex:  index)
-            if (title == nil){
-                titleView.removeFromSuperview()
-                continue
+        let allTitleViews = allTitleViews()
+        for titleView in allTitleViews {
+            if let index = allTitleViews.firstIndex(of: titleView){
+                let title = delegate?.titleOfColumnForDate(date, columnIndex: index)
+                if (title == nil){
+                    titleView.removeFromSuperview()
+                    continue
+                }
+                let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
+                if (trimmed.count == 0){
+                    titleView.removeFromSuperview()
+                    continue
+                }
+                
+                    // add a view
+                titleView.text = trimmed
+                if (titleView.superview != self){
+                    self.addSubview(titleView)
+                }
+                titleView.superview?.bringSubviewToFront(titleView)
+                
+                let columnFrame = self.frameForColumn(columnIndex: index)
+                let fittingFrame = titleView.sizeThatFits(columnFrame.size)
+                
+                let frame = CGRect(x: columnFrame.origin.x + viewInset,
+                                   y: yPoint,
+                                   width: columnFrame.width - viewInset * 2,
+                                   height: fittingFrame.height)
+                titleView.frame = frame
             }
-            let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
-            if (trimmed.count == 0){
-                titleView.removeFromSuperview()
-                continue
-            }
-            
-                // add a view
-            titleView.text = trimmed
-            if (titleView.superview != self){
-                self.addSubview(titleView)
-            }
-            titleView.superview?.bringSubviewToFront(titleView)
-            
-            let columnFrame = self.frameForColumn(columnIndex: index)
-            let fittingFrame = titleView.sizeThatFits(columnFrame.size)
-            
-            let frame = CGRect(x: columnFrame.origin.x + viewInset,
-                               y: yPoint,
-                               width: columnFrame.width - viewInset * 2,
-                               height: fittingFrame.height)
-            titleView.frame = frame
-            
         }
     }
     
@@ -1197,7 +1209,7 @@ public final class TimelineView: UIView {
             }
             eventViews.append(newView)
         }
-        for titleView in titleViews {
+        for titleView in allTitleViews() {
             titleView.superview?.bringSubviewToFront(titleView)
         }
     }

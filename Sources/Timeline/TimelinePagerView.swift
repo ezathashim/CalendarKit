@@ -192,7 +192,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         timeline.updateStyle(zoomedStyle)
         timeline.offsetColumnTitle(xFactor: 0,
                                    yFactor: (zoomedStyle.verticalDiff/currentVerticalDiff),
-                                   animated: true)
+                                   animated: false)
         container.backgroundColor = style.backgroundColor
     }
     
@@ -264,7 +264,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             scrollView.contentOffset = offset
             
                 // adjust the columnTitles
-            currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0, yDiff: offset.y - previousDraggingOffset.y, animated: true)
+            currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0,
+                                                                  yDiff: offset.y - previousDraggingOffset.y,
+                                                                  animated: false)
             previousDraggingOffset = offset
             
             let diffX = offset.x - initialContentOffset.x
@@ -276,12 +278,19 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 event.frame = frame
                 initialContentOffset = offset
             }
+            
+            if (offset.y.isZero == true){
+                scrollViewDidEndScrollingAnimation(scrollView)
+            }
+            if ((offset.y + 1) >= (scrollView.contentSize.height - scrollView.bounds.height)){
+                scrollViewDidEndScrollingAnimation(scrollView)
+            }
         }
     }
     
     public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
         if (draggingVertically == true){
-            currentTimeline?.container.timeline.hideColumnTitles(true)
+            currentTimeline?.container.timeline.hideColumnTitles(false)
         }
     }
     
