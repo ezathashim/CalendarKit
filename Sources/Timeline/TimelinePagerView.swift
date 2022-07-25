@@ -186,9 +186,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     private func updateStyleOfTimelineContainer(controller: TimelineContainerController) {
         let container = controller.container
         let timeline = controller.timeline
+        let currentVerticalDiff = timeline.style.verticalDiff
         var zoomedStyle = TimelineStyle();
         zoomedStyle.verticalDiff = (style.verticalDiff * heightScaleFactor)
         timeline.updateStyle(zoomedStyle)
+        timeline.offsetColumnTitle(xFactor: 0,
+                                   yFactor: (zoomedStyle.verticalDiff/currentVerticalDiff),
+                                   animated: true)
         container.backgroundColor = style.backgroundColor
     }
     
@@ -260,7 +264,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             scrollView.contentOffset = offset
             
                 // adjust the columnTitles
-            currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0, yDiff: offset.y - previousDraggingOffset.y)
+            currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0, yDiff: offset.y - previousDraggingOffset.y, animated: true)
             previousDraggingOffset = offset
             
             let diffX = offset.x - initialContentOffset.x
@@ -277,7 +281,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
         if (draggingVertically == true){
-            currentTimeline?.container.timeline.hideColumnTitles(true, duration: 0.2)
+            currentTimeline?.container.timeline.hideColumnTitles(true)
         }
     }
     
@@ -293,8 +297,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         isDragging = false
-        currentTimeline?.container.timeline.layoutColumnTitles(false, duration: 0)
-        currentTimeline?.container.timeline.showColumnTitles(true, duration: 0.3)
+        currentTimeline?.container.timeline.layoutColumnTitles(true)
+        currentTimeline?.container.timeline.showColumnTitles(true)
     }
     
     
@@ -314,7 +318,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         pagingViewController.children.forEach({ (controller) in
             if let controller = controller as? TimelineContainerController {
                 updateTimeline(controller.timeline)
-                controller.timeline.layoutColumnTitles(true, duration: 0.36)
+                controller.timeline.layoutColumnTitles(true)
             }
         })
     }
@@ -468,7 +472,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
-
+    
     @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer){
         
         
@@ -542,10 +546,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                         }
                     }
                     
-                    
-                        // update the timeline titles
-                    currentTimeline?.container.timeline.offsetColumnTitle(xFactor: 0, yFactor: hDiffRatio)
-                    
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
                     sender.scale = 1.0;
                     
@@ -567,8 +567,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         
         if (sender.state == .ended) {
-            
-            currentTimeline?.container.timeline.layoutColumnTitles(true, duration: 0.36)
             
             return;
         }
