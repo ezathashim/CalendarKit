@@ -417,6 +417,29 @@ public final class TimelineView: UIView {
     }
     
     
+    public func columnTitleTopYPoint() -> CGFloat{
+        var yPoint = CGFloat.greatestFiniteMagnitude
+        for titleView in allTitleViews() {
+            if (yPoint > titleView.frame.origin.y){
+                yPoint = titleView.frame.origin.y
+                print("titleView.frame.height \(titleView.frame.height)")
+            }
+        }
+        return yPoint
+    }
+    
+    
+    public func columnTitleGreatestHeight() -> CGFloat{
+        var h = 0.0
+        for titleView in allTitleViews() {
+            if (h < titleView.frame.height){
+                h = titleView.frame.height
+            }
+        }
+        return h
+    }
+    
+    
     public func hideColumnTitles(_ animated : Bool) {
         if (animated == false){
             UIView.performWithoutAnimation {

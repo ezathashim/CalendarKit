@@ -279,11 +279,28 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 initialContentOffset = offset
             }
             
+            
+            var atExtremes = false
             if (offset.y.isZero == true){
-                scrollViewDidEndScrollingAnimation(scrollView)
+                atExtremes = true
             }
             if ((offset.y + 1) >= (scrollView.contentSize.height - scrollView.bounds.height)){
+                atExtremes = true
+            }
+            
+            if (atExtremes == true){
                 scrollViewDidEndScrollingAnimation(scrollView)
+            } else {
+                    // hide the titles if the titles have not been offset
+                    // this might happen because of delays in scrollView delegate callbacks
+                if let timeline = currentTimeline?.container.timeline{
+                    let topYPoint = timeline.columnTitleTopYPoint()
+                    let topHeight = timeline.columnTitleGreatestHeight()
+                    
+                    if (abs(offset.y - topYPoint) > topHeight*1.5){
+                        timeline.hideColumnTitles(false)
+                    }
+                }
             }
         }
     }
