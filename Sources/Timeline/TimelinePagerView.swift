@@ -306,7 +306,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         isDragging = false
-        currentTimeline?.container.timeline.layoutColumnTitles(true)
+        currentTimeline?.container.timeline.layoutColumnTitles(false)
         currentTimeline?.container.timeline.showColumnTitles(true)
     }
     
