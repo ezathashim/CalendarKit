@@ -234,14 +234,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         return controller
     }
     
-    private var isDragging : Bool = false
     private var draggingVertically : Bool = true
     private var initialContentOffset = CGPoint.zero
     private var previousDraggingOffset = CGPoint.zero
     public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         initialContentOffset = scrollView.contentOffset
         previousDraggingOffset = scrollView.contentOffset
-        isDragging = true
         
         let velocity = scrollView.panGestureRecognizer.velocity(in: scrollView.superview)
         draggingVertically = abs(velocity.x) < abs(velocity.y)
@@ -252,9 +250,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            // need to keep track if we are dragging with isDragging
+            // need to only adjust if 'isDragging'
             // since this 'scrollViewDidScroll' API is called with ANY contentOffset change
-        if (isDragging == true){
+        if (scrollView.isDragging == true){
             var offset = scrollView.contentOffset
             if (draggingVertically == true){
                 offset.x = initialContentOffset.x
@@ -278,30 +276,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 event.frame = frame
                 initialContentOffset = offset
             }
-            
-            
-            var atExtremes = false
-            if (offset.y.isZero == true){
-                atExtremes = true
-            }
-            if ((offset.y + 1) >= (scrollView.contentSize.height - scrollView.bounds.height)){
-                atExtremes = true
-            }
-            
-            if (atExtremes == true){
-                scrollViewDidEndScrollingAnimation(scrollView)
-            } else {
-                    // hide the titles if the titles have not been offset
-                    // this might happen because of delays in scrollView delegate callbacks
-                if let timeline = currentTimeline?.container.timeline{
-                    let topYPoint = timeline.columnTitleTopYPoint()
-                    let topHeight = timeline.columnTitleGreatestHeight()
-                    
-                    if (abs(offset.y - topYPoint) > topHeight*1.5){
-                        timeline.hideColumnTitles(false)
-                    }
-                }
-            }
         }
     }
     
@@ -322,7 +296,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        isDragging = false
         currentTimeline?.container.timeline.layoutColumnTitles(false)
         currentTimeline?.container.timeline.showColumnTitles(true)
     }

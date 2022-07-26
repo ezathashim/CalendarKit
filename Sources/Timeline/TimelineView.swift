@@ -422,7 +422,6 @@ public final class TimelineView: UIView {
         for titleView in allTitleViews() {
             if (yPoint > titleView.frame.origin.y){
                 yPoint = titleView.frame.origin.y
-                print("titleView.frame.height \(titleView.frame.height)")
             }
         }
         return yPoint
