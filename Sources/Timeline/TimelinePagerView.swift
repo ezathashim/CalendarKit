@@ -489,19 +489,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         if (sender.state == .changed) {
             
             if (sender.numberOfTouches > 1) {
-                
-                let directionMode = _mode(sender)
-                
-                if directionMode == "H"{
-                        // horizontal
-                        // TODO
-                        // implement increasing/decreasing width for multi-column view
-                        // should have some sort of maximimum where it is less that the view width
+                                
+                switch pinchOrientation(sender) {
                     
-                }
-                
-                if directionMode == "V"{
-                        // vertical
+                case .vertical:
                     var currentTimelineHeight = style.verticalInset * 2 + style.verticalDiff * 24 * heightScaleFactor
                     if (currentTimelineHeight.isZero == true){
                         currentTimelineHeight = CGFloat.leastNonzeroMagnitude
@@ -524,11 +515,26 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
                     sender.scale = 1.0;
+                    
+                case .horizontal:
+                        // horizontal
+                        // TODO
+                        // implement increasing/decreasing width for multi-column view
+                        // should have some sort of maximimum where it is less that the view width
+                    
+                        // reset it to 1.0 so that it linearly scales the heightScaleFactor
+                    sender.scale = 1.0;
+                    
+                case .diagnonal:
+                        // ignore for now
+                        // reset it to 1.0 so that it linearly scales the heightScaleFactor
+                    sender.scale = 1.0;
+                    
+                case .unknown:
+                        // reset it to 1.0 so that it linearly scales the heightScaleFactor
+                    sender.scale = 1.0;
                 }
                 
-                if directionMode == "D"{
-                        // diagonal
-                }
                 
             }
             
@@ -545,13 +551,16 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
     }
     
+    enum PinchOrientation {
+        case vertical, horizontal, diagnonal, unknown
+    }
     
-    func _mode(_ sender: UIPinchGestureRecognizer) -> String {
+    func pinchOrientation(_ sender: UIPinchGestureRecognizer) -> PinchOrientation {
         
             // very important:
         if sender.numberOfTouches < 2 {
             print("avoided an obscure crash!!")
-            return ""
+            return .unknown
         }
         
         let A = sender.location(ofTouch: 0, in: self)
@@ -559,13 +568,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         let xD = abs( A.x - B.x )
         let yD = abs( A.y - B.y )
-        if (xD == 0) { return "V" }
-        if (yD == 0) { return "H" }
+        if (xD == 0) { return .vertical }
+        if (yD == 0) { return .horizontal }
         let ratio = xD / yD
             // print(ratio)
-        if (ratio > 2) { return "H" }
-        if (ratio < 0.5) { return "V" }
-        return "D"
+        if (ratio > 2) { return .horizontal }
+        if (ratio < 0.5) { return .vertical }
+        return .diagnonal
     }
     
     
