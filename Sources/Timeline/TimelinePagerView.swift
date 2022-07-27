@@ -85,7 +85,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
-    public var pinchGestureIsVertical = false
     private lazy var pinchGestureRecognizer = UIPinchGestureRecognizer(target: self,
                                                                        action: #selector(handlePinchGesture(_:)))
     
@@ -302,11 +301,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     
     public func reloadData() {
-        if Thread.current.isMainThread{
-            reallyReloadData()
-            return
-        }
-        
         DispatchQueue.main.async {
             self.reallyReloadData()
         }
@@ -485,33 +479,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
         
         if (sender.state == .began) {
-            
-                // determine if mostly horizontal or vertical
-                // http://stackoverflow.com/questions/9064760/can-i-use-uipinchgesturerecognizers-to-distinguish-between-horizontal-and-vertic
-            
-            
-                // figure out if vertical
-            let touch0: CGPoint = sender.location(ofTouch: 0, in: self)
-            let touch1: CGPoint = sender.location(ofTouch: 1, in: self)
-            
-            let tangent : CGFloat = abs((touch1.y - touch0.y) / (touch1.x - touch0.x));
-            
-            pinchGestureIsVertical = true
-            
-            if (tangent <= 0.2679491924) {
-                    // 15 degrees
-                    // NSLog(@"Horizontal");
-                pinchGestureIsVertical = false
-                
-            }
-            
-            if (tangent >= 3.7320508076) {
-                    // 75 degrees
-                    // NSLog(@"Vertical");
-                    // do nothing and just default to vertical
-                
-            }
-            
+            currentTimeline?.container.timeline.hideColumnTitles(true)
             
             return;
         }
@@ -522,9 +490,18 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             
             if (sender.numberOfTouches > 1) {
                 
-                if (pinchGestureIsVertical) {
+                let directionMode = _mode(sender)
+                
+                if directionMode == "H"{
+                        // horizontal
+                        // TODO
+                        // implement increasing/decreasing width for multi-column view
+                        // should have some sort of maximimum where it is less that the view width
                     
-                    
+                }
+                
+                if directionMode == "V"{
+                        // vertical
                     var currentTimelineHeight = style.verticalInset * 2 + style.verticalDiff * 24 * heightScaleFactor
                     if (currentTimelineHeight.isZero == true){
                         currentTimelineHeight = CGFloat.leastNonzeroMagnitude
@@ -547,17 +524,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     
                         // reset it to 1.0 so that it linearly scales the heightScaleFactor
                     sender.scale = 1.0;
-                    
-                    
-                } else {
-                    
-                        // maybe width should only be adjusted on .ended
-                        // need to try it out once we figure out how to adjust the layout elements
-                        // only useful when we have mulitple columns working
-                        //print("Adjust column width in response to pinch gesture")
-                    
                 }
                 
+                if directionMode == "D"{
+                        // diagonal
+                }
                 
             }
             
@@ -566,11 +537,35 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         
         if (sender.state == .ended) {
+            currentTimeline?.container.timeline.layoutColumnTitles(false)
+            currentTimeline?.container.timeline.showColumnTitles(true)
             
             return;
         }
         
+    }
+    
+    
+    func _mode(_ sender: UIPinchGestureRecognizer) -> String {
         
+            // very important:
+        if sender.numberOfTouches < 2 {
+            print("avoided an obscure crash!!")
+            return ""
+        }
+        
+        let A = sender.location(ofTouch: 0, in: self)
+        let B = sender.location(ofTouch: 1, in: self)
+        
+        let xD = abs( A.x - B.x )
+        let yD = abs( A.y - B.y )
+        if (xD == 0) { return "V" }
+        if (yD == 0) { return "H" }
+        let ratio = xD / yD
+            // print(ratio)
+        if (ratio > 2) { return "H" }
+        if (ratio < 0.5) { return "V" }
+        return "D"
     }
     
     
