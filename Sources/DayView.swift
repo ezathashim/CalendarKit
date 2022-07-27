@@ -182,6 +182,10 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         timelinePagerView.scrollTo(event: event, animated: animated)
     }
     
+    @objc public func canScrollMoreTo(event: EventDescriptor?)->Bool {
+        return timelinePagerView.canScrollMoreTo(event: event)
+    }
+    
     @objc public func scrollTo(hour24: Float, minute: Float, animated: Bool = true) {
         timelinePagerView.scrollTo(hour24: hour24, minute: minute, animated: animated)
     }

@@ -61,14 +61,33 @@ public final class TimelineContainer: UIScrollView {
     }
     
     public func scrollTo(event: EventDescriptor?, animated: Bool) {
+        let targetPoint = scrollPointFor(event: event)
+        if ((targetPoint.x.isNaN == false) && (targetPoint.y.isNaN == false)){
+            setTimelineOffset(targetPoint, animated: animated)
+        }
+    }
+    
+    private func scrollPointFor(event: EventDescriptor?)->CGPoint {
         let allDayViewHeight = timeline.allDayViewHeight
         let padding = allDayViewHeight + 8
         let xToScroll = timeline.xPosition(event: event, includeSidebar: true) ?? contentOffset.x
+        var targetPoint = CGPoint(x: CGFloat.nan, y: CGFloat.nan)
         if let yToScroll = timeline.yPosition(event: event) {
-            let targetPoint = CGPoint(x: xToScroll,
-                                      y: yToScroll - padding)
-            setTimelineOffset(targetPoint, animated: animated)
+            targetPoint = CGPoint(x: xToScroll,
+                                  y: yToScroll - padding)
+            
         }
+        return targetPoint
+    }
+    
+    public func canScrollMoreTo(event: EventDescriptor?)->Bool {
+        let targetOffset = timelineOffsetFor(event: event)
+        if ((targetOffset.x.isNaN == true) && (targetOffset.y.isNaN == true)){
+            return false
+        }
+        let xDiff = abs(contentOffset.x - targetOffset.x)
+        let yDiff = abs(contentOffset.y - targetOffset.y)
+        return (xDiff > 2) || (yDiff > 2)
     }
     
     public func scrollTo(hour24: Float, animated: Bool = true) {
@@ -125,6 +144,17 @@ public final class TimelineContainer: UIScrollView {
         setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
     }
     
+    private func timelineOffsetFor(event: EventDescriptor?)->CGPoint {
+        let offset = scrollPointFor(event: event)
+        if ((offset.x.isNaN == true) && (offset.y.isNaN == true)){
+            return offset
+        }
+        
+        let yToScroll = offset.y
+        let bottomOfScrollView = contentSize.height - bounds.size.height
+        let newContentY = (yToScroll < bottomOfScrollView) ? yToScroll : bottomOfScrollView
+        return CGPoint(x: offset.x, y: newContentY)
+    }
     
     private func setTimelineOffset(_ offset: CGPoint, animated: Bool) {
         let yToScroll = offset.y

@@ -375,6 +375,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
+    public func canScrollMoreTo(event: EventDescriptor?)->Bool {
+        if let controller = currentTimeline {
+            return controller.container.canScrollMoreTo(event: event)
+        }
+        return false
+    }
+    
     public func scrollTo(hour24: Float, minute: Float, animated: Bool = true) {
         if let controller = currentTimeline {
             controller.container.scrollTo(hour24: hour24, minute: minute, animated: animated)
