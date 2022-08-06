@@ -13,6 +13,8 @@ public protocol TimelinePagerViewDelegate: AnyObject {
     func timelinePager(timelinePager: TimelinePagerView, didMoveTo  date: Date)
     func timelinePager(timelinePager: TimelinePagerView, didLongPressTimelineAt date: Date, columnIndex: NSInteger)
     
+        // status context menu
+    func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration?
     
         // Editing
     func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor)
@@ -828,6 +830,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func timelineView(_ timelineView: TimelineView, didTap event: EventView) {
         delegate?.timelinePagerDidSelectEventView(event)
+    }
+
+    public func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration? {
+        return delegate?.timelinePager(timelinePager: self, event: event, menuConfigurationAtStatusPoint: point)
     }
     
     public func timelineView(_ timelineView: TimelineView, didLongPress event: EventView) {

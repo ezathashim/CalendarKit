@@ -245,6 +245,50 @@ import UIKit
     }
     
     
+    public func pointOnStatus(_ p: CGPoint) -> Bool{
+        let statusPending = descriptor?.statusAttributedText
+        let statusBackgroundColor = descriptor?.statusBackgroundColor
+        
+        let statusRect = statusFrame(self.bounds, text: statusPending, backgroundColor: statusBackgroundColor)
+        if (statusRect.isEmpty == true){
+            return false
+        }
+        return statusRect.contains(p)
+    }
+    
+    
+    private func statusFrame(_ rect: CGRect,
+                             text: NSAttributedString?,
+                             backgroundColor: UIColor?) -> CGRect{
+        if (backgroundColor == nil){
+            return CGRect.zero
+        }
+        
+        guard let statusPending = text else {
+            return CGRect.zero
+        }
+        
+        var statusRect = rect.insetBy(dx: 6, dy: 6)
+        
+        let pendingSize = CGSize(width:  statusRect.size.width, height: CGFloat.greatestFiniteMagnitude)
+        let pendingRect = statusPending.boundingRect(with: pendingSize,
+                                                     options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                     context: nil)
+        
+        let width = fminf(Float(statusRect.size.width), Float(pendingRect.size.width));
+        let height = fminf(Float(statusRect.size.height), Float(pendingRect.size.height));
+        
+        statusRect.size.width = CGFloat(width)
+        statusRect.size.height = CGFloat(height)
+        
+            // adjust the origin to center
+        statusRect.origin.x = (rect.size.width - statusRect.size.width)/2;
+        
+        return statusRect
+        
+    }
+    
+    
     override open func draw(_ rect: CGRect) {
         super.draw(rect)
         guard let context = UIGraphicsGetCurrentContext() else {
@@ -372,39 +416,15 @@ import UIKit
         
         
             // status string
-        
         let statusPending = descriptor?.statusAttributedText
         let statusBackgroundColor = descriptor?.statusBackgroundColor
         
-        
-        if ((statusPending != nil) && (statusBackgroundColor != nil)) {
-            
-                // draw over everything
-            
-            var statusRect = rect.insetBy(dx: 6, dy: 6)
-            
-            let pendingSize = CGSize(width:  statusRect.size.width, height: CGFloat.greatestFiniteMagnitude)
-            let pendingRect = statusPending!.boundingRect(with: pendingSize,
-                                                          options: [.usesLineFragmentOrigin, .usesFontLeading],
-                                                          context: nil)
-            
-            
-            let width = fminf(Float(statusRect.size.width), Float(pendingRect.size.width));
-            let height = fminf(Float(statusRect.size.height), Float(pendingRect.size.height));
-            
-            statusRect.size.width = CGFloat(width)
-            statusRect.size.height = CGFloat(height)
-            
-                // adjust the origin to center the pill
-            statusRect.origin.x = (rect.size.width - statusRect.size.width)/2;
-            
-            
+        let statusRect = statusFrame(rect, text: statusPending, backgroundColor: statusBackgroundColor)
+        if (statusRect.isEmpty == false){
             
             let alpha = 1.0
             
             let statusColor = statusBackgroundColor!.withAlphaComponent(alpha)
-            
-            
             
                 // draw a pill behind the text
             let pillRect = statusRect.insetBy(dx: -3, dy: -3)

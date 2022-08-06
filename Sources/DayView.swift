@@ -21,6 +21,9 @@ import UIKit
         // will preferentially call these instead of the non-optional variants above without columnIndex
     @objc optional func dayView(dayView: DayView, didTapTimelineAt date: Date, columnIndex : NSInteger)
     @objc optional func dayView(dayView: DayView, didLongPressTimelineAt date: Date, columnIndex : NSInteger)
+    
+        // will show context menu when status is long-pressed
+    @objc optional func statusMenuConfiguration(forEvent: EventView) -> UIContextMenuConfiguration?
 }
 
 public class DayView: UIView, TimelinePagerViewDelegate {
@@ -239,6 +242,9 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     
     public func timelinePagerDidSelectEventView(_ eventView: EventView) {
         delegate?.dayViewDidSelectEventView(eventView)
+    }
+    public func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration? {
+        return delegate?.statusMenuConfiguration?(forEvent: event)
     }
     public func timelinePagerDidLongPressEventView(_ eventView: EventView) {
         delegate?.dayViewDidLongPressEventView(eventView)

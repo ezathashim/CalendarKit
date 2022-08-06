@@ -9,9 +9,10 @@ public protocol TimelineViewDelegate: AnyObject {
     func numberOfColumnsForDate(_ date: Date)  -> NSInteger
     func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
     func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
+    func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration?
 }
 
-public final class TimelineView: UIView {
+public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     public weak var delegate: TimelineViewDelegate?
     public let timeSidebarWidth : CGFloat = 53
     
@@ -298,6 +299,14 @@ public final class TimelineView: UIView {
             let pressedLocation = gestureRecognizer.location(in: self)
             let colIndex = columnIndexAtPoint( pressedLocation)
             if let eventView = findEventView(at: pressedLocation) {
+                let eventPoint = convert(pressedLocation, to: eventView)
+                let tappedOnStatus = eventView.pointOnStatus(eventPoint)
+                if (tappedOnStatus == true){
+                    let config = delegate?.timelineView(self, event: eventView, menuConfigurationAtStatusPoint: eventPoint)
+                    if (config != nil){
+                        return
+                    }
+                }
                 delegate?.timelineView(self, didLongPress: eventView)
             } else {
                 delegate?.timelineView(self, didLongPressAt: yToDate(pressedLocation.y), columnIndex: colIndex)
@@ -1227,6 +1236,8 @@ public final class TimelineView: UIView {
         for _ in regularLayoutAttributes {
             let newView = pool.dequeue()
             if newView.superview == nil {
+                let interaction = UIContextMenuInteraction(delegate: self)
+                newView.interactions = [interaction]
                 addSubview(newView)
             }
             eventViews.append(newView)
@@ -1241,6 +1252,20 @@ public final class TimelineView: UIView {
         eventViews.removeAll()
         setNeedsDisplay()
     }
+    
+    
+    public func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
+        for eventView in eventViews {
+            let indexOfInteraction = eventView.interactions.firstIndex(where: {$0 === interaction})
+            if (indexOfInteraction != nil){
+                if eventView.pointOnStatus(location){
+                    return delegate?.timelineView(self, event: eventView, menuConfigurationAtStatusPoint: location)
+                }
+            }
+        }
+        return nil
+    }
+    
     
         // MARK: - Helpers
     
