@@ -98,7 +98,7 @@ public final class TimelineColumnTitleView: UIView {
             textLabel.sizeToFit()
             let maxSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
             let size = sizeThatFits(maxSize)
-            layer.cornerRadius = size.height/2
+            layer.cornerRadius = size.height/4
             setNeedsLayout()
             layoutIfNeeded()
         }

@@ -272,7 +272,7 @@ import UIKit
         
         let pendingSize = CGSize(width:  statusRect.size.width, height: CGFloat.greatestFiniteMagnitude)
         let pendingRect = statusPending.boundingRect(with: pendingSize,
-                                                     options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                     options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
                                                      context: nil)
         
         let width = fminf(Float(statusRect.size.width), Float(pendingRect.size.width));
@@ -417,17 +417,15 @@ import UIKit
         
             // status string
         let statusPending = descriptor?.statusAttributedText
-        let statusBackgroundColor = descriptor?.statusBackgroundColor
+        let statusBackgroundColor = descriptor?.statusBackgroundColor ?? UIColor.clear
         
-        let statusRect = statusFrame(rect, text: statusPending, backgroundColor: statusBackgroundColor)
+        let statusRect = statusFrame(rect,
+                                     text: statusPending,
+                                     backgroundColor: descriptor?.statusBackgroundColor)
         if (statusRect.isEmpty == false){
             
-            let alpha = 1.0
-            
-            let statusColor = statusBackgroundColor!.withAlphaComponent(alpha)
-            
-                // draw a pill behind the text
-            let pillRect = statusRect.insetBy(dx: -3, dy: -3)
+                // need to offset the x slightly to make it look more centered around the text
+            let pillRect = statusRect.insetBy(dx: -4, dy: -4).offsetBy(dx: 2, dy: 0)
             let circlePath = UIBezierPath(roundedRect: pillRect,
                                           cornerRadius: pillRect.size.height/2)
             
@@ -435,11 +433,10 @@ import UIKit
             context.saveGState()
             
             context.setStrokeColor(UIColor.white.cgColor)
-            context.setFillColor(statusColor.cgColor)
+            context.setFillColor(statusBackgroundColor.cgColor)
             
             circlePath.stroke()
             circlePath.fill()
-            
             
             statusPending!.draw(with: statusRect,
                                 options: [NSStringDrawingOptions.truncatesLastVisibleLine,
