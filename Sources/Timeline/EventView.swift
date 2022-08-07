@@ -246,10 +246,16 @@ import UIKit
     
     
     public func pointOnStatus(_ p: CGPoint) -> Bool{
-        let statusPending = descriptor?.statusAttributedText
-        let statusBackgroundColor = descriptor?.statusBackgroundColor
+        let contentFrame = CGRect(x: bounds.minX + kInset,
+                                  y: bounds.minY + kInset,
+                                  width: bounds.width - 2 * kInset,
+                                  height: bounds.height - 2 * kInset)
         
-        let statusRect = statusFrame(self.bounds, text: statusPending, backgroundColor: statusBackgroundColor)
+        let statusRect = statusFrame(contentFrame,
+                                     cornerImage: cornerImage,
+                                     statusText: descriptor?.statusAttributedText,
+                                     statusBackgroundColor: descriptor?.statusBackgroundColor,
+                                     leftText: leftAttributedText)
         if (statusRect.isEmpty == true){
             return false
         }
@@ -257,18 +263,37 @@ import UIKit
     }
     
     
-    private func statusFrame(_ rect: CGRect,
-                             text: NSAttributedString?,
-                             backgroundColor: UIColor?) -> CGRect{
-        if (backgroundColor == nil){
+    
+    private func statusFrame(_ contentFrame: CGRect,
+                                cornerImage: UIImage?,
+                                statusText: NSAttributedString?,
+                                statusBackgroundColor: UIColor?,
+                                leftText: NSAttributedString?) -> CGRect{
+        
+        if (statusBackgroundColor == nil){
             return CGRect.zero
         }
         
-        guard let statusPending = text else {
+        guard let statusPending = statusText else {
             return CGRect.zero
         }
         
-        var statusRect = rect.insetBy(dx: 6, dy: 6)
+        
+        let leftTextRect = leftTextFrame(contentFrame,
+                                         text: leftText)
+        
+            // get the badge space
+        let imageWidth = cornerImageWidth(contentFrame,
+                                          image: cornerImage,
+                                          leftText: leftText)
+        
+        let widthInset = 6 + imageWidth/2 + leftTextRect.width/2
+        if (widthInset >= contentFrame.width){
+            return CGRect.zero
+        }
+        
+        
+        var statusRect = contentFrame.insetBy(dx: widthInset, dy: 6)
         
         let pendingSize = CGSize(width:  statusRect.size.width, height: CGFloat.greatestFiniteMagnitude)
         let pendingRect = statusPending.boundingRect(with: pendingSize,
@@ -281,11 +306,153 @@ import UIKit
         statusRect.size.width = CGFloat(width)
         statusRect.size.height = CGFloat(height)
         
-            // adjust the origin to center
-        statusRect.origin.x = (rect.size.width - statusRect.size.width)/2;
+            // adjust the origin
+        let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+        
+            // left to right
+        let yPoint = contentFrame.minY + 3
+        var xPoint = contentFrame.maxX - imageWidth - statusRect.width - kInset - 3
+        if (rightToLeft == true) {
+            xPoint = contentFrame.minX + imageWidth + kInset + 3
+        }
+        statusRect.origin.x = xPoint
+        statusRect.origin.y = yPoint
         
         return statusRect
+    }
+    
+    private func leftTextFrame(_ contentFrame: CGRect,
+                               text: NSAttributedString?) -> CGRect{
         
+        let leftTextRect = text?.boundingRect(with: CGSize(width: contentFrame.width,
+                                                                 height:  CGFloat.greatestFiniteMagnitude),
+                                                    options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
+                                                    context: nil) ?? CGRect(x: contentFrame.minY,
+                                                                            y: contentFrame.minY,
+                                                                            width: 0,
+                                                                            height: contentFrame.size.height)
+        return leftTextRect
+    }
+    
+    
+    private func cornerImageWidth(_ contentFrame: CGRect,
+                                  image: UIImage?,
+                                  leftText: NSAttributedString?) -> CGFloat{
+        
+        if (image == nil){
+            return 0
+        }
+        
+        let leftTextRect = leftTextFrame(contentFrame,
+                                         text: leftText)
+        
+        var imageWidth = 20.0
+        if ((contentFrame.width - leftTextRect.width) < imageWidth){
+            imageWidth = 0
+        }
+        if (contentFrame.height < imageWidth){
+            imageWidth = 0
+        }
+        
+        return imageWidth
+    }
+    
+    
+    private func rightTextFrame(_ contentFrame: CGRect,
+                                cornerImage: UIImage?,
+                                statusText: NSAttributedString?,
+                                statusBackgroundColor: UIColor?,
+                                leftText: NSAttributedString?) -> CGRect{
+        
+        let leftTextRect = leftTextFrame(contentFrame,
+                                         text: leftText)
+        
+            // get the badge space
+        let imageWidth = cornerImageWidth(contentFrame,
+                                          image: cornerImage,
+                                          leftText: leftText)
+        
+        let statusRect = statusFrame(contentFrame,
+                                     cornerImage: cornerImage,
+                                     statusText: statusText,
+                                     statusBackgroundColor: statusBackgroundColor,
+                                     leftText: leftText)
+        
+        let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+        
+        
+        var yPoint = contentFrame.minY
+        if (statusRect.isEmpty == false){
+            yPoint = statusRect.origin.y + statusRect.height + kInset
+        }
+        
+            // left to right
+        var rightTextRect = CGRect(x: leftTextRect.maxX + kInset,
+                                   y: yPoint,
+                                   width: contentFrame.width - leftTextRect.width - kInset - imageWidth,
+                                   height: contentFrame.size.height)
+        
+        if (rightToLeft == true) {
+            rightTextRect = CGRect(x: contentFrame.minX + imageWidth,
+                                   y: yPoint,
+                                   width: contentFrame.width - leftTextRect.width - kInset - imageWidth,
+                                   height: contentFrame.size.height)
+        }
+        
+        
+        if (rightTextRect.width/contentFrame.width < 0.25){
+                // don't draw if less than a quarter content width
+            rightTextRect = CGRect.zero
+        }
+        
+        return rightTextRect
+    }
+    
+    
+    private func cornerImageFrame(_ contentFrame: CGRect,
+                                  cornerImage: UIImage?,
+                                  statusText: NSAttributedString?,
+                                  statusBackgroundColor: UIColor?,
+                                  leftText: NSAttributedString?) -> CGRect{
+        
+            // get the badge space
+        let imageWidth = cornerImageWidth(contentFrame,
+                                          image: cornerImage,
+                                          leftText: leftText)
+        if (imageWidth < 8){
+            return CGRect.zero
+        }
+        
+        
+        let rightTextRect = rightTextFrame(contentFrame,
+                                           cornerImage: cornerImage,
+                                           statusText: statusText,
+                                           statusBackgroundColor: statusBackgroundColor,
+                                           leftText: leftText)
+        
+        let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
+        
+            // left to right
+        var imageFrame = CGRect(x: rightTextRect.maxX + kInset,
+                                y: contentFrame.origin.y,
+                                width: imageWidth,
+                                height: contentFrame.height)
+        
+        if (rightToLeft == true) {
+            imageFrame = CGRect(x: contentFrame.maxX - imageWidth - kInset,
+                                y: contentFrame.origin.y,
+                                width: imageWidth,
+                                height: contentFrame.height)
+        }
+        
+        imageFrame = imageFrame.insetBy(dx: 2, dy: 0)
+        
+        if let badgeImage = cornerImage{
+            imageFrame = maximalRectWithoutChangingAspectRatio(boundary: imageFrame, shape : badgeImage.size)
+            imageFrame.origin.y = contentFrame.origin.y
+        }
+        
+        return imageFrame
     }
     
     
@@ -332,103 +499,54 @@ import UIKit
         
         backgroundImage?.draw(in: backgroundImageFrame)
         
-        let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
-        
-        let leftAttText = leftAttributedText
-        let rightAttText = rightAttributedText
-        
-        
             // draw the left text first
-        leftAttText?.draw(with: contentFrame,
+        leftAttributedText?.draw(with: contentFrame,
                           options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
                           context: nil)
         
-        
-        let leftTextRect = leftAttText?.boundingRect(with: CGSize(width: contentFrame.width,
-                                                                  height:  CGFloat.greatestFiniteMagnitude),
-                                                     options: [.usesLineFragmentOrigin, .usesFontLeading],
-                                                     context: nil) ?? CGRect(x: contentFrame.minY,
-                                                                             y: contentFrame.minY,
-                                                                             width: 0,
-                                                                             height: contentFrame.size.height)
-        
-            // get the badge space
-        var imageWidth = 20.0
-        if ((contentFrame.width - leftTextRect.width) < imageWidth){
-            imageWidth = 0
-        }
-        if (contentFrame.height < imageWidth){
-            imageWidth = 0
-        }
-        
-        if (cornerImage == nil){
-            imageWidth = 0
-        }
-        
-        
             // left to right
-        var rightTextRect = CGRect(x: leftTextRect.maxX + kInset,
-                                   y: contentFrame.minY,
-                                   width: contentFrame.width - leftTextRect.width - kInset - imageWidth,
-                                   height: contentFrame.size.height)
+        let rightTextRect = rightTextFrame(contentFrame,
+                                           cornerImage: cornerImage,
+                                           statusText: descriptor?.statusAttributedText,
+                                           statusBackgroundColor: descriptor?.statusBackgroundColor,
+                                           leftText: leftAttributedText)
         
-        if (rightToLeft == true) {
-            rightTextRect = CGRect(x: contentFrame.minX + imageWidth,
-                                   y: contentFrame.minY,
-                                   width: contentFrame.width - leftTextRect.width - kInset - imageWidth,
-                                   height: contentFrame.size.height)
+        
+        if (rightTextRect.isEmpty == false){
+            rightAttributedText?.draw(with: rightTextRect,
+                                      options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
+                                      context: nil)
         }
         
         
-        if (rightTextRect.width/contentFrame.width > 0.25){
-            rightAttText?.draw(with: rightTextRect,
-                               options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
-                               context: nil)
-        }
-        
-        
-        
-        if (imageWidth > 8){
-            
-                // left to right
-            var imageFrame = CGRect(x: rightTextRect.maxX + kInset,
-                                    y: contentFrame.origin.y,
-                                    width: imageWidth,
-                                    height: contentFrame.height)
-            
-            if (rightToLeft == true) {
-                imageFrame = CGRect(x: contentFrame.maxX - imageWidth - kInset,
-                                    y: contentFrame.origin.y,
-                                    width: imageWidth,
-                                    height: contentFrame.height)
-            }
-            
-            imageFrame = imageFrame.insetBy(dx: 2, dy: 0)
-            
+        let imageFrame = cornerImageFrame(contentFrame,
+                                          cornerImage: cornerImage,
+                                          statusText: descriptor?.statusAttributedText,
+                                          statusBackgroundColor: descriptor?.statusBackgroundColor,
+                                          leftText: leftAttributedText)
+        if (imageFrame.isEmpty == false){
             if let badgeImage = cornerImage{
-                imageFrame = maximalRectWithoutChangingAspectRatio(boundary: imageFrame, shape : badgeImage.size)
-                imageFrame.origin.y = contentFrame.origin.y
                 badgeImage.draw(in: imageFrame)
             }
-            
         }
         
         
         
             // status string
-        let statusPending = descriptor?.statusAttributedText
-        let statusBackgroundColor = descriptor?.statusBackgroundColor ?? UIColor.clear
         
-        let statusRect = statusFrame(rect,
-                                     text: statusPending,
-                                     backgroundColor: descriptor?.statusBackgroundColor)
+        let statusRect = statusFrame(contentFrame,
+                                     cornerImage: cornerImage,
+                                     statusText: descriptor?.statusAttributedText,
+                                     statusBackgroundColor: descriptor?.statusBackgroundColor,
+                                     leftText: leftAttributedText)
         if (statusRect.isEmpty == false){
             
-                // need to offset the x slightly to make it look more centered around the text
-            let pillRect = statusRect.insetBy(dx: -4, dy: -4).offsetBy(dx: 2, dy: 0)
+                // draw background pill
+            let pillRect = statusRect.insetBy(dx: -4, dy: -4)
             let circlePath = UIBezierPath(roundedRect: pillRect,
                                           cornerRadius: pillRect.size.height/2)
             
+            let statusBackgroundColor = descriptor?.statusBackgroundColor ?? UIColor.clear
             
             context.saveGState()
             
@@ -438,10 +556,10 @@ import UIKit
             circlePath.stroke()
             circlePath.fill()
             
-            statusPending!.draw(with: statusRect,
-                                options: [NSStringDrawingOptions.truncatesLastVisibleLine,
-                                          NSStringDrawingOptions.usesLineFragmentOrigin],
-                                context: nil)
+            descriptor?.statusAttributedText!.draw(with: statusRect,
+                                                   options: [NSStringDrawingOptions.truncatesLastVisibleLine,
+                                                             NSStringDrawingOptions.usesLineFragmentOrigin],
+                                                   context: nil)
             
             context.restoreGState()
             
