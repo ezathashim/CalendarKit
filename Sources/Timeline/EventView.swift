@@ -278,22 +278,14 @@ import UIKit
             return CGRect.zero
         }
         
-        
-        let leftTextRect = leftTextFrame(contentFrame,
-                                         text: leftText)
-        
             // get the badge space
         let imageWidth = cornerImageWidth(contentFrame,
                                           image: cornerImage,
                                           leftText: leftText)
         
-        let widthInset = 6 + imageWidth/2 + leftTextRect.width/2
-        if (widthInset >= contentFrame.width){
-            return CGRect.zero
-        }
-        
-        
-        var statusRect = contentFrame.insetBy(dx: widthInset, dy: 6)
+        let xInset : CGFloat = 8
+        let yInset : CGFloat = 6
+        var statusRect = contentFrame.insetBy(dx: xInset, dy: yInset)
         
         let pendingSize = CGSize(width:  statusRect.size.width, height: CGFloat.greatestFiniteMagnitude)
         let pendingRect = statusPending.boundingRect(with: pendingSize,
@@ -310,10 +302,11 @@ import UIKit
         let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
         
             // left to right
-        let yPoint = contentFrame.minY + 3
-        var xPoint = contentFrame.maxX - imageWidth - statusRect.width - kInset - 3
+        
+        let yPoint = contentFrame.minY + yInset/2
+        var xPoint = contentFrame.maxX - imageWidth - kInset - statusRect.width - xInset/2
         if (rightToLeft == true) {
-            xPoint = contentFrame.minX + imageWidth + kInset + 3
+            xPoint = contentFrame.minX + imageWidth + kInset + xInset/2
         }
         statusRect.origin.x = xPoint
         statusRect.origin.y = yPoint
@@ -411,8 +404,6 @@ import UIKit
     
     private func cornerImageFrame(_ contentFrame: CGRect,
                                   cornerImage: UIImage?,
-                                  statusText: NSAttributedString?,
-                                  statusBackgroundColor: UIColor?,
                                   leftText: NSAttributedString?) -> CGRect{
         
             // get the badge space
@@ -424,36 +415,26 @@ import UIKit
         }
         
         
-        let rightTextRect = rightTextFrame(contentFrame,
-                                           cornerImage: cornerImage,
-                                           statusText: statusText,
-                                           statusBackgroundColor: statusBackgroundColor,
-                                           leftText: leftText)
-        
         let rightToLeft = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .rightToLeft
         
             // left to right
-        var imageFrame = CGRect(x: rightTextRect.maxX + kInset,
-                                y: contentFrame.origin.y,
-                                width: imageWidth,
-                                height: contentFrame.height)
-        
-        if (rightToLeft == true) {
-            imageFrame = CGRect(x: contentFrame.maxX - imageWidth - kInset,
-                                y: contentFrame.origin.y,
-                                width: imageWidth,
-                                height: contentFrame.height)
+        var xPoint = contentFrame.maxX - imageWidth
+        if (rightToLeft == true){
+            xPoint = contentFrame.minX
         }
         
-        imageFrame = imageFrame.insetBy(dx: 2, dy: 0)
+        var imageFrame = CGRect(x: xPoint,
+                                y: contentFrame.origin.y,
+                                width: imageWidth,
+                                height: contentFrame.height)
         
         if let badgeImage = cornerImage{
             imageFrame = maximalRectWithoutChangingAspectRatio(boundary: imageFrame, shape : badgeImage.size)
             imageFrame.origin.y = contentFrame.origin.y
         }
-        
         return imageFrame
     }
+    
     
     
     override open func draw(_ rect: CGRect) {
@@ -521,8 +502,6 @@ import UIKit
         
         let imageFrame = cornerImageFrame(contentFrame,
                                           cornerImage: cornerImage,
-                                          statusText: descriptor?.statusAttributedText,
-                                          statusBackgroundColor: descriptor?.statusBackgroundColor,
                                           leftText: leftAttributedText)
         if (imageFrame.isEmpty == false){
             if let badgeImage = cornerImage{
@@ -542,7 +521,7 @@ import UIKit
         if (statusRect.isEmpty == false){
             
                 // draw background pill
-            let pillRect = statusRect.insetBy(dx: -4, dy: -4)
+            let pillRect = statusRect.insetBy(dx: -6, dy: -3)
             let circlePath = UIBezierPath(roundedRect: pillRect,
                                           cornerRadius: pillRect.size.height/2)
             
