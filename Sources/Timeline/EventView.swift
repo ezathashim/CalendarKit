@@ -245,6 +245,22 @@ import UIKit
     }
     
     
+    public func pointOnCornerImage(_ p: CGPoint) -> Bool{
+        let contentFrame = CGRect(x: bounds.minX + kInset,
+                                  y: bounds.minY + kInset,
+                                  width: bounds.width - 2 * kInset,
+                                  height: bounds.height - 2 * kInset)
+        
+        let imageRect = cornerImageFrame(contentFrame,
+                                     cornerImage: cornerImage,
+                                     leftText: leftAttributedText)
+        if (imageRect.isEmpty == true){
+            return false
+        }
+        return imageRect.contains(p)
+    }
+    
+    
     public func pointOnStatus(_ p: CGPoint) -> Bool{
         let contentFrame = CGRect(x: bounds.minX + kInset,
                                   y: bounds.minY + kInset,

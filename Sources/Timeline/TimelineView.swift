@@ -4,12 +4,14 @@ public protocol TimelineViewDelegate: AnyObject {
     func timelineView(_ timelineView: TimelineView, didTapAt date: Date, columnIndex: NSInteger)
     func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date, columnIndex: NSInteger)
     func timelineView(_ timelineView: TimelineView, didTap event: EventView)
+    func timelineView(_ timelineView: TimelineView, didTapCornerImage event: EventView)
     func timelineView(_ timelineView: TimelineView, didLongPress event: EventView)
     func openIntervalForDate(_ date: Date) -> NSDateInterval
     func numberOfColumnsForDate(_ date: Date)  -> NSInteger
     func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
     func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
     func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration?
+    func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint) -> UIContextMenuConfiguration?
 }
 
 public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
@@ -307,6 +309,13 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                         return
                     }
                 }
+                let tappedOnCornerImage = eventView.pointOnCornerImage(eventPoint)
+                if (tappedOnCornerImage == true){
+                    let config = delegate?.timelineView(self, event: eventView, menuConfigurationAtCornerImagePoint: eventPoint)
+                    if (config != nil){
+                        return
+                    }
+                }
                 delegate?.timelineView(self, didLongPress: eventView)
             } else {
                 delegate?.timelineView(self, didLongPressAt: yToDate(pressedLocation.y), columnIndex: colIndex)
@@ -318,6 +327,12 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         let pressedLocation = sender.location(in: self)
         let colIndex = columnIndexAtPoint( pressedLocation)
         if let eventView = findEventView(at: pressedLocation) {
+            let eventPoint = convert(pressedLocation, to: eventView)
+            let tappedOnCornerImage = eventView.pointOnCornerImage(eventPoint)
+            if (tappedOnCornerImage == true){
+                delegate?.timelineView(self, didTapCornerImage: eventView)
+                return
+            }
             delegate?.timelineView(self, didTap: eventView)
         } else {
             delegate?.timelineView(self, didTapAt: yToDate(pressedLocation.y), columnIndex: colIndex)
@@ -439,11 +454,29 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     
     public func columnTitleGreatestHeight() -> CGFloat{
         var h = 0.0
-        for titleView in allTitleViews() {
-            if (h < titleView.frame.height){
-                h = titleView.frame.height
+        let allTitleViews = allTitleViews()
+        for titleView in allTitleViews {
+            if let index = allTitleViews.firstIndex(of: titleView){
+                let title = delegate?.titleOfColumnForDate(date, columnIndex: index)
+                if (title == nil){
+                    continue
+                }
+                let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
+                if (trimmed.count == 0){
+                    continue
+                }
+                
+                    // add the text
+                titleView.text = trimmed
+                
+                let columnFrame = self.frameForColumn(columnIndex: index)
+                let fittingFrame = titleView.sizeThatFits(columnFrame.size)
+                if (h < fittingFrame.height){
+                    h = fittingFrame.height
+                }
             }
         }
+        
         return h
     }
     
