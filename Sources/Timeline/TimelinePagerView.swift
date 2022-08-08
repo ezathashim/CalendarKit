@@ -108,12 +108,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             if (didChange == true){
                 delegate?.timelinePagerDidChangeWidthScaleFactor(timelinePager: self)
                 
-                pagingViewController.viewControllers?.forEach({ (timelineContainer) in
-                    if let controller = timelineContainer as? TimelineContainerController {
-                        controller.container.widthScaleFactor = widthScaleFactor
-                    }
-                })
-                
+                updateWidthFactor()
             }
         }
     }
@@ -215,6 +210,27 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     
+    public func updateWidthFactor() {
+        if Thread.current.isMainThread{
+            reallyUpdateWidthFactor();
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.reallyUpdateWidthFactor()
+        }
+    }
+    
+    
+    public func reallyUpdateWidthFactor() {
+        pagingViewController.viewControllers?.forEach({ (timelineContainer) in
+            if let controller = timelineContainer as? TimelineContainerController {
+                controller.container.widthScaleFactor = widthScaleFactor
+            }
+        })
+    }
+    
+    
     private func updateStyleOfTimelineContainer(controller: TimelineContainerController) {
         let container = controller.container
         let timeline = controller.timeline
@@ -261,6 +277,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         timeline.eventEditingSnappingBehavior = eventEditingSnappingBehavior
         timeline.date = date.dateOnly(calendar: calendar)
         updateStyleOfTimelineContainer(controller: controller)
+        controller.container.widthScaleFactor = widthScaleFactor
         controller.container.delegate = self
         updateTimeline(timeline)
         return controller
