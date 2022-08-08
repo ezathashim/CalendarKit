@@ -25,7 +25,7 @@ public final class TimelineContainer: UIScrollView {
             
                 // mention the change to the delegate
             if (didChange == true){
-                setNeedsLayout()
+                updateTimelineFrame()
             }
         }
     }
@@ -42,9 +42,7 @@ public final class TimelineContainer: UIScrollView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override public func layoutSubviews() {
-        super.layoutSubviews()
-        
+    public func updateTimelineFrame() {
         let totalColumnNumber = timeline.delegate?.numberOfColumnsForDate(timeline.date) ?? 1
         var colWidth = (bounds.width - timeline.timeSidebarWidth) / CGFloat(totalColumnNumber)
         if (colWidth < minColWidth){
@@ -64,8 +62,14 @@ public final class TimelineContainer: UIScrollView {
                                 y: 0,
                                 width: timelineWidth,
                                 height: timeline.fullHeight)
-        timeline.offsetAllDayView(by: contentOffset.y)
+    }
+    
+    
+    override public func layoutSubviews() {
+        super.layoutSubviews()
         
+        updateTimelineFrame()
+        timeline.offsetAllDayView(by: contentOffset.y)
         
             //adjust the scroll insets
         let allDayViewHeight = timeline.allDayViewHeight
