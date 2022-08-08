@@ -136,6 +136,10 @@ import UIKit
     dayView.beginEditing(event: event, animated: animated)
   }
   
+  @objc open func isEventEditing() -> Bool {
+      return dayView.isEventEditing()
+  }
+
   @objc open func endEventEditing() {
     dayView.endEventEditing()
   }

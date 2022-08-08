@@ -229,6 +229,10 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         timelinePagerView.beginEditing(event: event, animated: animated)
     }
     
+    public func isEventEditing() -> Bool {
+        return timelinePagerView.isEventEditing()
+    }
+    
     public func endEventEditing() {
         timelinePagerView.endEventEditing()
     }

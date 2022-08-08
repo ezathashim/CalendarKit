@@ -691,6 +691,11 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
+    
+    public func isEventEditing() -> Bool {
+        return ((editedEventView != nil) || (editedEvent != nil))
+    }
+    
         /// Ends editing mode
     public func endEventEditing() {
         prevOffset = .zero
