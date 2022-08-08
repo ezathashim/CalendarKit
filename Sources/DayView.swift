@@ -2,6 +2,7 @@ import UIKit
 
 @objc public protocol DayViewDelegate: AnyObject {
     func dayViewDidChangeHeightScaleFactor(dayView: DayView)
+    func dayViewDidChangeWidthScaleFactor(dayView: DayView)
     func dayViewDidSelectEventView(_ eventView: EventView)
     func dayViewDidLongPressEventView(_ eventView: EventView)
     func dayView(dayView: DayView, didTapTimelineAt date: Date)
@@ -70,6 +71,11 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     @objc public var heightScaleFactor: CGFloat{
         set { timelinePagerView.heightScaleFactor = newValue}
         get { timelinePagerView.heightScaleFactor }
+    }
+    
+    @objc public var widthScaleFactor: CGFloat{
+        set { timelinePagerView.widthScaleFactor = newValue}
+        get { timelinePagerView.widthScaleFactor }
     }
     
     public var state: DayViewState? {
@@ -242,6 +248,10 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     
     public func timelinePagerDidChangeHeightScaleFactor(timelinePager: TimelinePagerView) {
         delegate?.dayViewDidChangeHeightScaleFactor(dayView: self)
+    }
+    
+    public func timelinePagerDidChangeWidthScaleFactor(timelinePager: TimelinePagerView) {
+        delegate?.dayViewDidChangeWidthScaleFactor(dayView: self)
     }
     
     public func timelinePagerDidSelectEventView(_ eventView: EventView) {

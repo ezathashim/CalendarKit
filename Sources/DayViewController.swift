@@ -89,6 +89,9 @@ import UIKit
   open func dayViewDidChangeHeightScaleFactor(dayView: DayView) {
   }
     
+  open func dayViewDidChangeWidthScaleFactor(dayView: DayView) {
+  }
+    
   open func dayViewDidSelectEventView(_ eventView: EventView) {
   }
 

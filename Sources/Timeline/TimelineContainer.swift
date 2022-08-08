@@ -6,6 +6,30 @@ public final class TimelineContainer: UIScrollView {
         // iPhone SE is 320 points wide, 640 pixels wide
     private let minColWidth: CGFloat = 300
     
+    private var _widthScaleFactor : CGFloat = 1.0;
+    public var widthScaleFactor: CGFloat {
+        get { return _widthScaleFactor }
+        set {
+            var factor = newValue
+            if (factor < 0.5) {
+                factor = 0.5
+            }
+            if (factor > 6.0) {
+                factor = 6.0
+            }
+            
+                // keep 2 decimal places
+            let didChange = round(factor * 100) != round(_widthScaleFactor * 100)
+            
+            _widthScaleFactor = round(factor * 100) / 100.0
+            
+                // mention the change to the delegate
+            if (didChange == true){
+                setNeedsLayout()
+            }
+        }
+    }
+    
     public init(_ timeline: TimelineView) {
         self.timeline = timeline
         super.init(frame: .zero)
@@ -26,7 +50,11 @@ public final class TimelineContainer: UIScrollView {
         if (colWidth < minColWidth){
             colWidth = minColWidth
         }
-        let timelineWidth = timeline.timeSidebarWidth + colWidth * CGFloat(totalColumnNumber);
+        var widthFactor = widthScaleFactor
+        if (totalColumnNumber < 2){
+            widthFactor = 1
+        }
+        let timelineWidth = timeline.timeSidebarWidth + colWidth * CGFloat(totalColumnNumber) * widthFactor
         
         
         timeline.frame = CGRect(x: 0,
@@ -54,7 +82,8 @@ public final class TimelineContainer: UIScrollView {
     
     public func scrollToFirstEvent(animated: Bool) {
         let allDayViewHeight = timeline.allDayViewHeight
-        let padding = allDayViewHeight + 8
+        let columnTitleHeight = timeline.columnTitleGreatestHeight()
+        let padding = allDayViewHeight + columnTitleHeight + 8
         if let yToScroll = timeline.firstEventYPosition {
             setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
         }
@@ -69,7 +98,8 @@ public final class TimelineContainer: UIScrollView {
     
     private func scrollPointFor(event: EventDescriptor?)->CGPoint {
         let allDayViewHeight = timeline.allDayViewHeight
-        let padding = allDayViewHeight + 8
+        let columnTitleHeight = timeline.columnTitleGreatestHeight()
+        let padding = allDayViewHeight + columnTitleHeight + 8
         let xToScroll = timeline.xPosition(event: event, includeSidebar: true) ?? contentOffset.x
         var targetPoint = CGPoint(x: CGFloat.nan, y: CGFloat.nan)
         if let yToScroll = timeline.yPosition(event: event) {
@@ -114,7 +144,8 @@ public final class TimelineContainer: UIScrollView {
         guard let targetDate = self.timeline.calendar.date(from: newComponents) else {return}
         
         let allDayViewHeight = timeline.allDayViewHeight
-        let padding = allDayViewHeight + 8
+        let columnTitleHeight = timeline.columnTitleGreatestHeight()
+        let padding = allDayViewHeight + columnTitleHeight + 8
         let yToScroll = timeline.dateToY(targetDate)
         setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
     }
@@ -139,7 +170,8 @@ public final class TimelineContainer: UIScrollView {
         guard let targetDate = self.timeline.calendar.date(from: newComponents) else {return}
         
         let allDayViewHeight = timeline.allDayViewHeight
-        let padding = allDayViewHeight + 8
+        let columnTitleHeight = timeline.columnTitleGreatestHeight()
+        let padding = allDayViewHeight + columnTitleHeight + 8
         let yToScroll = timeline.dateToY(targetDate)
         setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
     }

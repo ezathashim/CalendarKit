@@ -1,8 +1,9 @@
 import UIKit
 
 public protocol TimelinePagerViewDelegate: AnyObject {
-        // zoom height change to pinch gesture
+        // zoom height and width change to pinch gesture
     func timelinePagerDidChangeHeightScaleFactor(timelinePager: TimelinePagerView)
+    func timelinePagerDidChangeWidthScaleFactor(timelinePager: TimelinePagerView)
     
     func timelinePagerDidSelectEventView(_ eventView: EventView)
     func timelinePagerDidLongPressEventView(_ eventView: EventView)
@@ -83,6 +84,36 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 
                 updateStyle(style)
                 reloadData()
+            }
+        }
+    }
+    private var _widthScaleFactor : CGFloat = 1.0;
+    public var widthScaleFactor: CGFloat {
+        get { return _widthScaleFactor }
+        set {
+            var factor = newValue
+            if (factor < 0.5) {
+                factor = 0.5
+            }
+            if (factor > 6.0) {
+                factor = 6.0
+            }
+            
+                // keep 2 decimal places
+            let didChange = round(factor * 100) != round(_widthScaleFactor * 100)
+            
+            _widthScaleFactor = round(factor * 100) / 100.0
+            
+                // mention the change to the delegate
+            if (didChange == true){
+                delegate?.timelinePagerDidChangeWidthScaleFactor(timelinePager: self)
+                
+                pagingViewController.viewControllers?.forEach({ (timelineContainer) in
+                    if let controller = timelineContainer as? TimelineContainerController {
+                        controller.container.widthScaleFactor = widthScaleFactor
+                    }
+                })
+                
             }
         }
     }
@@ -527,11 +558,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                     
                 case .horizontal:
                         // horizontal
-                        // TODO
-                        // implement increasing/decreasing width for multi-column view
-                        // should have some sort of maximimum where it is less that the view width
+                    widthScaleFactor = widthScaleFactor * sender.scale;
                     
-                        // reset it to 1.0 so that it linearly scales the heightScaleFactor
+                        // reset it to 1.0 so that it linearly scales the widthScaleFactor
                     sender.scale = 1.0;
                     
                 case .diagnonal:
