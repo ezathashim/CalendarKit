@@ -50,12 +50,15 @@ public final class TimelineContainer: UIScrollView {
         if (colWidth < minColWidth){
             colWidth = minColWidth
         }
-        var widthFactor = widthScaleFactor
-        if (totalColumnNumber < 2){
-            widthFactor = 1
-        }
-        let timelineWidth = timeline.timeSidebarWidth + colWidth * CGFloat(totalColumnNumber) * widthFactor
         
+        var timelineWidth = timeline.timeSidebarWidth + colWidth * CGFloat(totalColumnNumber) * widthScaleFactor
+        if (frame.width > 0) {
+            let widthDiff = abs(timelineWidth - frame.width)
+                // snap to the view.width if within 5 percent
+            if ((widthDiff / frame.width) < 0.05){
+                timelineWidth = frame.width
+            }
+        }
         
         timeline.frame = CGRect(x: 0,
                                 y: 0,
