@@ -360,6 +360,7 @@ import UIKit
     }
     
     
+    let defaultImageWidth : CGFloat = 24
     private func cornerImageWidth(_ contentFrame: CGRect,
                                   cornerImages: [UIImage]?,
                                   leftText: NSAttributedString?) -> CGFloat{
@@ -375,7 +376,7 @@ import UIKit
         let leftTextRect = leftTextFrame(contentFrame,
                                          text: leftText)
         
-        var imageWidth = 24.0
+        var imageWidth = defaultImageWidth
         if ((contentFrame.width - leftTextRect.width) < imageWidth){
             imageWidth = 0
         }
