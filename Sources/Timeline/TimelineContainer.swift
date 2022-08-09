@@ -88,9 +88,13 @@ public final class TimelineContainer: UIScrollView {
     }
     
     public func scrollToFirstEvent(animated: Bool) {
+        var spacer : CGFloat = 8
         let allDayViewHeight = timeline.allDayViewHeight
         let columnTitleHeight = timeline.columnTitleGreatestHeight()
-        let padding = allDayViewHeight + columnTitleHeight + 8
+        if (columnTitleHeight > 0){
+            spacer = spacer * 2
+        }
+        let padding = allDayViewHeight + columnTitleHeight + spacer
         if let yToScroll = timeline.firstEventYPosition {
             setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
         }
@@ -104,9 +108,13 @@ public final class TimelineContainer: UIScrollView {
     }
     
     private func scrollPointFor(event: EventDescriptor?)->CGPoint {
+        var spacer : CGFloat = 8
         let allDayViewHeight = timeline.allDayViewHeight
         let columnTitleHeight = timeline.columnTitleGreatestHeight()
-        let padding = allDayViewHeight + columnTitleHeight + 8
+        if (columnTitleHeight > 0){
+            spacer = spacer * 2
+        }
+        let padding = allDayViewHeight + columnTitleHeight + spacer
         let xToScroll = timeline.xPosition(event: event, includeSidebar: true) ?? contentOffset.x
         var targetPoint = CGPoint(x: CGFloat.nan, y: CGFloat.nan)
         if let yToScroll = timeline.yPosition(event: event) {
@@ -150,9 +158,13 @@ public final class TimelineContainer: UIScrollView {
         
         guard let targetDate = self.timeline.calendar.date(from: newComponents) else {return}
         
+        var spacer : CGFloat = 8
         let allDayViewHeight = timeline.allDayViewHeight
         let columnTitleHeight = timeline.columnTitleGreatestHeight()
-        let padding = allDayViewHeight + columnTitleHeight + 8
+        if (columnTitleHeight > 0){
+            spacer = spacer * 2
+        }
+        let padding = allDayViewHeight + columnTitleHeight + spacer
         let yToScroll = timeline.dateToY(targetDate)
         setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
     }
@@ -176,9 +188,13 @@ public final class TimelineContainer: UIScrollView {
         
         guard let targetDate = self.timeline.calendar.date(from: newComponents) else {return}
         
+        var spacer : CGFloat = 8
         let allDayViewHeight = timeline.allDayViewHeight
         let columnTitleHeight = timeline.columnTitleGreatestHeight()
-        let padding = allDayViewHeight + columnTitleHeight + 8
+        if (columnTitleHeight > 0){
+            spacer = spacer * 2
+        }
+        let padding = allDayViewHeight + columnTitleHeight + spacer
         let yToScroll = timeline.dateToY(targetDate)
         setTimelineOffset(CGPoint(x: contentOffset.x, y: yToScroll - padding), animated: animated)
     }
