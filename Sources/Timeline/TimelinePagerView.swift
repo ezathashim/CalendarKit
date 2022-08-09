@@ -6,7 +6,7 @@ public protocol TimelinePagerViewDelegate: AnyObject {
     func timelinePagerDidChangeWidthScaleFactor(timelinePager: TimelinePagerView)
     
     func timelinePagerDidSelectEventView(_ eventView: EventView)
-    func timelinePagerDidTapCornerImageEventView(_ eventView: EventView)
+    func timelinePagerDidTapCornerImageEventView(_ eventView: EventView, imageIndex: NSInteger)
     func timelinePagerDidLongPressEventView(_ eventView: EventView)
     func timelinePager(timelinePager: TimelinePagerView, didTapTimelineAt date: Date, columnIndex: NSInteger)
     func timelinePagerDidBeginDragging(timelinePager: TimelinePagerView)
@@ -17,7 +17,7 @@ public protocol TimelinePagerViewDelegate: AnyObject {
     
         // context menu
     func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration?
-    func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint) -> UIContextMenuConfiguration?
+    func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint, imageIndex : NSInteger) -> UIContextMenuConfiguration?
     
         // Editing
     func timelinePager(timelinePager: TimelinePagerView, didUpdate event: EventDescriptor)
@@ -885,16 +885,16 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         delegate?.timelinePagerDidSelectEventView(event)
     }
     
-    public func timelineView(_ timelineView: TimelineView, didTapCornerImage event: EventView) {
-        delegate?.timelinePagerDidTapCornerImageEventView(event)
+    public func timelineView(_ timelineView: TimelineView, didTapCornerImage event: EventView, imageIndex : NSInteger) {
+        delegate?.timelinePagerDidTapCornerImageEventView(event, imageIndex: imageIndex)
     }
 
     public func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration? {
         return delegate?.timelinePager(timelinePager: self, event: event, menuConfigurationAtStatusPoint: point)
     }
     
-    public func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint) -> UIContextMenuConfiguration? {
-        return delegate?.timelinePager(timelinePager: self, event: event, menuConfigurationAtCornerImagePoint: point)
+    public func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint, imageIndex : NSInteger) -> UIContextMenuConfiguration? {
+        return delegate?.timelinePager(timelinePager: self, event: event, menuConfigurationAtCornerImagePoint: point, imageIndex : imageIndex)
     }
     
     public func timelineView(_ timelineView: TimelineView, didLongPress event: EventView) {

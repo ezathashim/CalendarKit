@@ -8,7 +8,7 @@ import UIKit
     private var rightAttributedText : NSAttributedString?
     private var leftAttributedText : NSAttributedString?
     private var lineBreakMode : NSLineBreakMode = .byTruncatingTail
-    private var cornerImage : UIImage?
+    private var cornerImages : [UIImage]?
     private var backgroundImage : UIImage?
     
     
@@ -167,7 +167,7 @@ import UIKit
         backgroundColor = event.backgroundColor
         color = event.color
         marginColor = event.marginColor;
-        cornerImage = event.cornerImage;
+        cornerImages = event.cornerImages;
         backgroundImage = event.backgroundImage
         eventResizeHandles.forEach{
             $0.borderColor = event.color
@@ -245,19 +245,35 @@ import UIKit
     }
     
     
-    public func pointOnCornerImage(_ p: CGPoint) -> Bool{
+    public func pointOnCornerImageAtIndex(_ p: CGPoint) -> NSInteger{
+        
         let contentFrame = CGRect(x: bounds.minX + kInset,
                                   y: bounds.minY + kInset,
                                   width: bounds.width - 2 * kInset,
                                   height: bounds.height - 2 * kInset)
         
-        let imageRect = cornerImageFrame(contentFrame,
-                                     cornerImage: cornerImage,
-                                     leftText: leftAttributedText)
-        if (imageRect.isEmpty == true){
-            return false
+        guard let images = cornerImages else {
+            return NSNotFound
         }
-        return imageRect.contains(p)
+        
+        
+        for index in 0 ..< images.count {
+            
+            let imageRect = cornerImageFrame(contentFrame,
+                                             cornerImages: images,
+                                             imageIndex: index,
+                                             leftText: leftAttributedText)
+            
+            if (imageRect.isEmpty == true){
+                continue
+            }
+            
+            if (imageRect.contains(p) == true){
+                return index
+            }
+        }
+        
+        return NSNotFound
     }
     
     
@@ -268,7 +284,7 @@ import UIKit
                                   height: bounds.height - 2 * kInset)
         
         let statusRect = statusFrame(contentFrame,
-                                     cornerImage: cornerImage,
+                                     cornerImages: cornerImages,
                                      statusText: descriptor?.statusAttributedText,
                                      statusBackgroundColor: descriptor?.statusBackgroundColor,
                                      leftText: leftAttributedText)
@@ -281,7 +297,7 @@ import UIKit
     
     
     private func statusFrame(_ contentFrame: CGRect,
-                                cornerImage: UIImage?,
+                                cornerImages: [UIImage]?,
                                 statusText: NSAttributedString?,
                                 statusBackgroundColor: UIColor?,
                                 leftText: NSAttributedString?) -> CGRect{
@@ -296,7 +312,7 @@ import UIKit
         
             // get the badge space
         let imageWidth = cornerImageWidth(contentFrame,
-                                          image: cornerImage,
+                                          cornerImages: cornerImages,
                                           leftText: leftText)
         
         let xInset : CGFloat = 8
@@ -345,17 +361,21 @@ import UIKit
     
     
     private func cornerImageWidth(_ contentFrame: CGRect,
-                                  image: UIImage?,
+                                  cornerImages: [UIImage]?,
                                   leftText: NSAttributedString?) -> CGFloat{
         
-        if (image == nil){
+        guard let images = cornerImages else {
+            return 0
+        }
+        
+        if (images.count == 0){
             return 0
         }
         
         let leftTextRect = leftTextFrame(contentFrame,
                                          text: leftText)
         
-        var imageWidth = 20.0
+        var imageWidth = 24.0
         if ((contentFrame.width - leftTextRect.width) < imageWidth){
             imageWidth = 0
         }
@@ -368,7 +388,7 @@ import UIKit
     
     
     private func rightTextFrame(_ contentFrame: CGRect,
-                                cornerImage: UIImage?,
+                                cornerImages: [UIImage]?,
                                 statusText: NSAttributedString?,
                                 statusBackgroundColor: UIColor?,
                                 leftText: NSAttributedString?) -> CGRect{
@@ -378,11 +398,11 @@ import UIKit
         
             // get the badge space
         let imageWidth = cornerImageWidth(contentFrame,
-                                          image: cornerImage,
+                                          cornerImages: cornerImages,
                                           leftText: leftText)
         
         let statusRect = statusFrame(contentFrame,
-                                     cornerImage: cornerImage,
+                                     cornerImages: cornerImages,
                                      statusText: statusText,
                                      statusBackgroundColor: statusBackgroundColor,
                                      leftText: leftText)
@@ -419,12 +439,27 @@ import UIKit
     
     
     private func cornerImageFrame(_ contentFrame: CGRect,
-                                  cornerImage: UIImage?,
+                                  cornerImages: [UIImage]?,
+                                  imageIndex: NSInteger,
                                   leftText: NSAttributedString?) -> CGRect{
+        
+        guard let images = cornerImages else {
+            return CGRect.zero
+        }
+        
+        if imageIndex == NSNotFound {
+            return CGRect.zero
+        }
+        
+        if (imageIndex >= images.count){
+            return CGRect.zero
+        }
+        
+        let cornerImage = images[imageIndex]
         
             // get the badge space
         let imageWidth = cornerImageWidth(contentFrame,
-                                          image: cornerImage,
+                                          cornerImages: cornerImages,
                                           leftText: leftText)
         if (imageWidth < 8){
             return CGRect.zero
@@ -444,10 +479,15 @@ import UIKit
                                 width: imageWidth,
                                 height: contentFrame.height)
         
-        if let badgeImage = cornerImage{
-            imageFrame = maximalRectWithoutChangingAspectRatio(boundary: imageFrame, shape : badgeImage.size)
-            imageFrame.origin.y = contentFrame.origin.y
+        let spacer : CGFloat = 4
+        imageFrame = maximalRectWithoutChangingAspectRatio(boundary: imageFrame, shape : cornerImage.size)
+        imageFrame.origin.y = contentFrame.origin.y + imageWidth * CGFloat(imageIndex) + spacer * CGFloat(imageIndex)
+        
+            // if the image is not entirely in the content, then reject
+        if (contentFrame.contains(imageFrame) == false){
+            return CGRect.zero
         }
+        
         return imageFrame
     }
     
@@ -503,7 +543,7 @@ import UIKit
         
             // left to right
         let rightTextRect = rightTextFrame(contentFrame,
-                                           cornerImage: cornerImage,
+                                           cornerImages: cornerImages,
                                            statusText: descriptor?.statusAttributedText,
                                            statusBackgroundColor: descriptor?.statusBackgroundColor,
                                            leftText: leftAttributedText)
@@ -516,13 +556,20 @@ import UIKit
         }
         
         
-        let imageFrame = cornerImageFrame(contentFrame,
-                                          cornerImage: cornerImage,
-                                          leftText: leftAttributedText)
-        if (imageFrame.isEmpty == false){
-            if let badgeImage = cornerImage{
-                badgeImage.draw(in: imageFrame)
+        if let images = cornerImages {
+            
+            for index in 0 ..< images.count {
+                let imageFrame = cornerImageFrame(contentFrame,
+                                                  cornerImages: images,
+                                                  imageIndex: index,
+                                                  leftText: leftAttributedText)
+                if (imageFrame.isEmpty == false){
+                    let cornerImage = images[index]
+                    cornerImage.draw(in: imageFrame)
+                }
+                
             }
+            
         }
         
         
@@ -530,7 +577,7 @@ import UIKit
             // status string
         
         let statusRect = statusFrame(contentFrame,
-                                     cornerImage: cornerImage,
+                                     cornerImages: cornerImages,
                                      statusText: descriptor?.statusAttributedText,
                                      statusBackgroundColor: descriptor?.statusBackgroundColor,
                                      leftText: leftAttributedText)

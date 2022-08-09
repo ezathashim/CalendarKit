@@ -4,7 +4,7 @@ import UIKit
     func dayViewDidChangeHeightScaleFactor(dayView: DayView)
     func dayViewDidChangeWidthScaleFactor(dayView: DayView)
     func dayViewDidSelectEventView(_ eventView: EventView)
-    @objc optional func dayViewDidTapCornerImageEventView(_ eventView: EventView)
+    @objc optional func dayViewDidTapCornerImageEventView(_ eventView: EventView, imageIndex : NSInteger)
     func dayViewDidLongPressEventView(_ eventView: EventView)
     func dayView(dayView: DayView, didTapTimelineAt date: Date)
     func dayView(dayView: DayView, didLongPressTimelineAt date: Date)
@@ -26,7 +26,7 @@ import UIKit
     
         // will show context menu when status is long-pressed
     @objc optional func statusMenuConfiguration(forEvent: EventView) -> UIContextMenuConfiguration?
-    @objc optional func cornerImageMenuConfiguration(forEvent: EventView) -> UIContextMenuConfiguration?
+    @objc optional func cornerImageMenuConfiguration(forEvent: EventView, imageIndex : NSInteger) -> UIContextMenuConfiguration?
 }
 
 public class DayView: UIView, TimelinePagerViewDelegate {
@@ -260,14 +260,14 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         delegate?.dayViewDidSelectEventView(eventView)
     }
     
-    public func timelinePagerDidTapCornerImageEventView(_ eventView: EventView) {
-        delegate?.dayViewDidTapCornerImageEventView?(eventView) ?? delegate?.dayViewDidSelectEventView(eventView)
+    public func timelinePagerDidTapCornerImageEventView(_ eventView: EventView, imageIndex : NSInteger) {
+        delegate?.dayViewDidTapCornerImageEventView?(eventView, imageIndex: imageIndex) ?? delegate?.dayViewDidSelectEventView(eventView)
     }
     public func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration? {
         return delegate?.statusMenuConfiguration?(forEvent: event)
     }
-    public func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint) -> UIContextMenuConfiguration? {
-        return delegate?.cornerImageMenuConfiguration?(forEvent: event)
+    public func timelinePager(timelinePager: TimelinePagerView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint, imageIndex : NSInteger) -> UIContextMenuConfiguration? {
+        return delegate?.cornerImageMenuConfiguration?(forEvent: event, imageIndex: imageIndex)
     }
     public func timelinePagerDidLongPressEventView(_ eventView: EventView) {
         delegate?.dayViewDidLongPressEventView(eventView)

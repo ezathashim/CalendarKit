@@ -4,14 +4,14 @@ public protocol TimelineViewDelegate: AnyObject {
     func timelineView(_ timelineView: TimelineView, didTapAt date: Date, columnIndex: NSInteger)
     func timelineView(_ timelineView: TimelineView, didLongPressAt date: Date, columnIndex: NSInteger)
     func timelineView(_ timelineView: TimelineView, didTap event: EventView)
-    func timelineView(_ timelineView: TimelineView, didTapCornerImage event: EventView)
+    func timelineView(_ timelineView: TimelineView, didTapCornerImage event: EventView, imageIndex : NSInteger)
     func timelineView(_ timelineView: TimelineView, didLongPress event: EventView)
     func openIntervalForDate(_ date: Date) -> NSDateInterval
     func numberOfColumnsForDate(_ date: Date)  -> NSInteger
     func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
     func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
     func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration?
-    func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint) -> UIContextMenuConfiguration?
+    func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint, imageIndex : NSInteger) -> UIContextMenuConfiguration?
 }
 
 public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
@@ -309,9 +309,9 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                         return
                     }
                 }
-                let tappedOnCornerImage = eventView.pointOnCornerImage(eventPoint)
-                if (tappedOnCornerImage == true){
-                    let config = delegate?.timelineView(self, event: eventView, menuConfigurationAtCornerImagePoint: eventPoint)
+                let tappedOnCornerImageIndex = eventView.pointOnCornerImageAtIndex(eventPoint)
+                if (tappedOnCornerImageIndex != NSNotFound){
+                    let config = delegate?.timelineView(self, event: eventView, menuConfigurationAtCornerImagePoint: eventPoint, imageIndex: tappedOnCornerImageIndex)
                     if (config != nil){
                         return
                     }
@@ -328,9 +328,9 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         let colIndex = columnIndexAtPoint( pressedLocation)
         if let eventView = findEventView(at: pressedLocation) {
             let eventPoint = convert(pressedLocation, to: eventView)
-            let tappedOnCornerImage = eventView.pointOnCornerImage(eventPoint)
-            if (tappedOnCornerImage == true){
-                delegate?.timelineView(self, didTapCornerImage: eventView)
+            let tappedOnCornerImageIndex = eventView.pointOnCornerImageAtIndex(eventPoint)
+            if (tappedOnCornerImageIndex != NSNotFound){
+                delegate?.timelineView(self, didTapCornerImage: eventView, imageIndex : tappedOnCornerImageIndex)
                 return
             }
             delegate?.timelineView(self, didTap: eventView)
@@ -1294,6 +1294,10 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                 if eventView.pointOnStatus(location){
                     return delegate?.timelineView(self, event: eventView, menuConfigurationAtStatusPoint: location)
                 }
+            }
+            let tappedOnCornerImageIndex = eventView.pointOnCornerImageAtIndex(location)
+            if (tappedOnCornerImageIndex != NSNotFound){
+                return delegate?.timelineView(self, event: eventView, menuConfigurationAtCornerImagePoint: location, imageIndex: tappedOnCornerImageIndex)
             }
         }
         return nil

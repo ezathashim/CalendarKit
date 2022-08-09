@@ -20,7 +20,7 @@ import UIKit
     
   public var marginColor: UIColor?
     
-  public var cornerImage: UIImage?
+  public var cornerImages: [UIImage]?
   public var backgroundImage: UIImage?
     
   public var statusAttributedText: NSAttributedString?

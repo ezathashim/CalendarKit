@@ -25,7 +25,7 @@ import UIKit
     
         // can draw an image at the tail end of the text
         // useful for badging the event
-  var cornerImage: UIImage? {get}
+  var cornerImages: [UIImage]? {get}
   var backgroundImage: UIImage? {get}
 
     
