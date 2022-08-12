@@ -1294,10 +1294,10 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                 if eventView.pointOnStatus(location){
                     return delegate?.timelineView(self, event: eventView, menuConfigurationAtStatusPoint: location)
                 }
-            }
-            let tappedOnCornerImageIndex = eventView.pointOnCornerImageAtIndex(location)
-            if (tappedOnCornerImageIndex != NSNotFound){
-                return delegate?.timelineView(self, event: eventView, menuConfigurationAtCornerImagePoint: location, imageIndex: tappedOnCornerImageIndex)
+                let tappedOnCornerImageIndex = eventView.pointOnCornerImageAtIndex(location)
+                if (tappedOnCornerImageIndex != NSNotFound){
+                    return delegate?.timelineView(self, event: eventView, menuConfigurationAtCornerImagePoint: location, imageIndex: tappedOnCornerImageIndex)
+                }
             }
         }
         return nil
