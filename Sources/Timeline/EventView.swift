@@ -593,10 +593,22 @@ import UIKit
             
             context.saveGState()
             
-            context.setStrokeColor(UIColor.white.cgColor)
-            context.setFillColor(statusBackgroundColor.cgColor)
+                // add a margin equal to the background color in case it is over some text
+            if let background = backgroundColor {
+                    // add a margin equal to the background color
+                context.setStrokeColor(background.cgColor)
+                circlePath.lineWidth = 6
+                circlePath.stroke()
+            }
             
+            
+                // add a margin equal to the background color
+            context.setStrokeColor(UIColor.white.cgColor)
+            circlePath.lineWidth = 2
             circlePath.stroke()
+            
+            
+            context.setFillColor(statusBackgroundColor.cgColor)
             circlePath.fill()
             
             descriptor?.statusAttributedText!.draw(with: statusRect,
