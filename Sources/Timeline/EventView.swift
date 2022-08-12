@@ -420,13 +420,13 @@ import UIKit
         var rightTextRect = CGRect(x: leftTextRect.maxX + kInset,
                                    y: yPoint,
                                    width: contentFrame.width - leftTextRect.width - kInset - imageWidth,
-                                   height: contentFrame.size.height)
+                                   height: contentFrame.maxY - yPoint)
         
         if (rightToLeft == true) {
             rightTextRect = CGRect(x: contentFrame.minX + imageWidth,
                                    y: yPoint,
                                    width: contentFrame.width - leftTextRect.width - kInset - imageWidth,
-                                   height: contentFrame.size.height)
+                                   height: contentFrame.maxY - yPoint)
         }
         
         
