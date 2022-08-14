@@ -10,6 +10,7 @@ import UIKit
     private var lineBreakMode : NSLineBreakMode = .byTruncatingTail
     private var cornerImages : [UIImage]?
     private var backgroundImage : UIImage?
+    private var backgroundImageAlpha : CGFloat = 1
     
     
     
@@ -169,6 +170,7 @@ import UIKit
         marginColor = event.marginColor;
         cornerImages = event.cornerImages;
         backgroundImage = event.backgroundImage
+        backgroundImageAlpha = event.backgroundImageAlpha
         eventResizeHandles.forEach{
             $0.borderColor = event.color
             $0.isHidden = event.editedEvent == nil
@@ -535,7 +537,10 @@ import UIKit
             backgroundImageFrame = maximalRectWithoutChangingAspectRatio(boundary: backgroundImageFrame, shape : backingImage.size)
         }
         
-        backgroundImage?.draw(in: backgroundImageFrame)
+        
+        backgroundImage?.draw(in: backgroundImageFrame,
+                              blendMode: .normal,
+                              alpha: backgroundImageAlpha)
         
             // draw the left text first
         leftAttributedText?.draw(with: contentFrame,

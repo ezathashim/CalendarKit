@@ -27,6 +27,7 @@ import UIKit
         // useful for badging the event
   var cornerImages: [UIImage]? {get}
   var backgroundImage: UIImage? {get}
+  var backgroundImageAlpha: CGFloat {get}
 
     
         // will draw a round rect in the center of the EventView

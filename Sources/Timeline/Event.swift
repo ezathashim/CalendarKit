@@ -22,6 +22,7 @@ import UIKit
     
   public var cornerImages: [UIImage]?
   public var backgroundImage: UIImage?
+  public var backgroundImageAlpha: CGFloat = 1.0
     
   public var statusAttributedText: NSAttributedString?
   public var statusBackgroundColor: UIColor?
