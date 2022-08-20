@@ -12,17 +12,32 @@ public final class TimelineColumnTitleView: UIView {
         }
     }
     
+    
     public var style: TimelineColumnTitleStyle = TimelineColumnTitleStyle() {
         didSet {
-            layer.backgroundColor = style.backgroundColor.cgColor
+            backingView.backgroundColor = style.backgroundColor
             layer.borderColor = style.borderColor.cgColor
             layer.borderWidth = style.borderWidth
             layer.cornerRadius = style.cornerRadius
             
             textLabel.font = style.font
             textLabel.textColor = style.textColor
+            
+            for subview in subviews {
+                if subview is UIVisualEffectView {
+                    subview.removeFromSuperview()
+                }
+            }
+            
+            if let effect = style.blurEffect {
+                let effectView = UIVisualEffectView(effect: effect)
+                effectView.frame = bounds
+                effectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                insertSubview(effectView, belowSubview: backingView)
+            }
         }
     }
+    
     
     public var textColor: UIColor = UIColor.black {
         didSet {
@@ -44,6 +59,15 @@ public final class TimelineColumnTitleView: UIView {
         return label
     }()
     
+    private lazy var backingView: UIView = {
+        let backView = UIView()
+        backView.frame = bounds
+        backView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                
+        return backView
+    }()
+    
+    
         // MARK: - RETURN VALUES
     
     override init(frame: CGRect) {
@@ -60,7 +84,9 @@ public final class TimelineColumnTitleView: UIView {
     
     private func configure() {
         clipsToBounds = true
+        addSubview(backingView)
         addSubview(textLabel)
+
         
         let contraints = [
             
@@ -80,6 +106,7 @@ public final class TimelineColumnTitleView: UIView {
         NSLayoutConstraint.activate(contraints)
         
         style = TimelineColumnTitleStyle()
+        
         
     }
     
@@ -103,6 +130,5 @@ public final class TimelineColumnTitleView: UIView {
             layoutIfNeeded()
         }
     }
-    
     
 }
