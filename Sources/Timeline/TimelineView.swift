@@ -1012,6 +1012,10 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                           NSAttributedString.Key.foregroundColor: self.style.timeColor,
                           NSAttributedString.Key.font: style.font] as [NSAttributedString.Key : Any]
         
+        let colTimeAttributes = [NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                                 NSAttributedString.Key.foregroundColor: self.style.separatorColor,
+                                 NSAttributedString.Key.font: style.font] as [NSAttributedString.Key : Any]
+        
         let scale = UIScreen.main.scale
         let hourLineHeight = 1 / UIScreen.main.scale
         
@@ -1057,7 +1061,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
             context?.beginPath()
             context?.move(to: CGPoint(x: xStart, y: y))
             context?.addLine(to: CGPoint(x: xEnd, y: y))
-            context?.setLineWidth(hourLineHeight / 2)
+            context?.setLineWidth(hourLineHeight * 0.6)
             for colNum in 1...totalColumnCount {
                 let index = colNum - 1
                 let verticalXStart = xStart + eachColWidth * CGFloat(index)
@@ -1086,6 +1090,19 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
             
             let timeString = NSString(string: time)
             timeString.draw(in: timeRect, withAttributes: attributes)
+            
+            for colNum in 1...totalColumnCount {
+                let index = colNum - 1
+                if (index > 0){
+                    var columnTimeRect = timeRect;
+                    if rightToLeft {
+                        columnTimeRect.origin.x = timeSidebarWidth + eachColWidth * CGFloat(index) - columnTimeRect.width
+                    } else {
+                        columnTimeRect.origin.x = timeSidebarWidth + eachColWidth * CGFloat(index)
+                    }
+                    timeString.draw(in: columnTimeRect, withAttributes: colTimeAttributes)
+                }
+            }
             
             if accentedMinute == 0 {
                 continue
@@ -1209,6 +1226,8 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         var overlappingEvents = [EventLayoutAttributes]()
         
         for eventByColArray in subsortedEvents {
+            groupsOfEvents.append(overlappingEvents)
+            overlappingEvents.removeAll()
             for event in eventByColArray {
                 if overlappingEvents.isEmpty {
                     overlappingEvents.append(event)
