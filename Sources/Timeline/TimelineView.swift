@@ -399,7 +399,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
             let currentWidth = super.frame.size.width
             super.frame = newValue
             if (abs(currentWidth - newValue.size.width) > 0.1){
-                layoutColumnTitles(false)
+                layoutColumnTitles()
             }
             
         }
@@ -446,15 +446,9 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     }
     
     
-    public func layoutColumnTitles(_ animated : Bool) {
-        if (animated == false){
-            UIView.performWithoutAnimation {
-                reallyLayoutColumnTitles()
-            }
-            return
-        }
-        UIView.animate(withDuration: animationDuration) {
-            self.reallyLayoutColumnTitles()
+    public func layoutColumnTitles() {
+        UIView.performWithoutAnimation {
+            reallyLayoutColumnTitles()
         }
     }
     

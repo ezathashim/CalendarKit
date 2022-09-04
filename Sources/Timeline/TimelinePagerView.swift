@@ -340,7 +340,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        currentTimeline?.container.timeline.layoutColumnTitles(false)
+        currentTimeline?.container.timeline.layoutColumnTitles()
     }
     
     
@@ -355,7 +355,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         pagingViewController.children.forEach({ (controller) in
             if let controller = controller as? TimelineContainerController {
                 updateTimeline(controller.timeline)
-                controller.timeline.layoutColumnTitles(true)
+                controller.timeline.layoutColumnTitles()
             }
         })
     }
@@ -590,7 +590,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         
         if (sender.state == .ended) {
-            currentTimeline?.container.timeline.layoutColumnTitles(false)
+            currentTimeline?.container.timeline.layoutColumnTitles()
             
             return;
         }
