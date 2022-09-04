@@ -1167,7 +1167,14 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     }
     
     private func layoutAllDayEvents() {
-            //add day view needs to be in front of the nowLine
+            //all day view needs to be in front of the nowLine
+            
+            // bring all columnTitles to front
+        for titleView in allTitleViews() {
+            bringSubviewToFront(titleView)
+        }
+        
+            // finally, bring allDayView to topmost
         bringSubviewToFront(allDayView)
     }
     
