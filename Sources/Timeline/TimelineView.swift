@@ -346,7 +346,6 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         // show the column titles
     private var _titleViews = [TimelineColumnTitleView]()
     
-    
     private func allTitleViews() ->[TimelineColumnTitleView]{
         var array = [TimelineColumnTitleView]()
         
@@ -357,7 +356,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         while (_titleViews.count < totalColumnCount){
             _titleViews.append(TimelineColumnTitleView())
         }
-        while (_titleViews.count > totalColumnCount){
+        while (_titleViews.count > (totalColumnCount + 1)){
             _titleViews.last?.removeFromSuperview()
             _titleViews.removeLast()
         }
@@ -368,50 +367,16 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     
     
     public func discardTitles() {
-        for titleView in _titleViews {
-            titleView.removeFromSuperview()
+        if (_titleViews.count == 0){
+            _titleViews.append(TimelineColumnTitleView())
         }
-        _titleViews.removeAll()
+        while (_titleViews.count > 1){
+            _titleViews.last?.removeFromSuperview()
+            _titleViews.removeLast()
+        }
     }
     
     private var animationDuration : CGFloat = 0.32
-    public func offsetColumnTitle(xDiff: CGFloat, yDiff: CGFloat, animated: Bool){
-        if (animated == false){
-            UIView.performWithoutAnimation {
-                reallyOffsetColumnTitle(xDiff: xDiff, yDiff: yDiff)
-            }
-            return
-        }
-        UIView.animate(withDuration: animationDuration) {
-            self.reallyOffsetColumnTitle(xDiff: xDiff, yDiff: yDiff)
-        }
-    }
-    
-    
-    private func reallyOffsetColumnTitle(xDiff: CGFloat, yDiff: CGFloat){
-        for titleView in allTitleViews() {
-            var frame = titleView.frame
-            frame.origin.x = frame.origin.x + xDiff
-            frame.origin.y = frame.origin.y + yDiff
-            titleView.frame = frame
-        }
-    }
-    
-    
-    public func offsetColumnTitle(xFactor: CGFloat, yFactor: CGFloat, animated: Bool){
-        if (animated == false){
-            UIView.performWithoutAnimation {
-                reallyOffsetColumnTitle(xFactor: xFactor, yFactor: yFactor)
-            }
-            return
-        }
-        UIView.animate(withDuration: animationDuration) {
-            self.reallyOffsetColumnTitle(xFactor: xFactor, yFactor: yFactor)
-        }
-        
-    }
-    
-    
     private func reallyOffsetColumnTitle(xFactor: CGFloat, yFactor: CGFloat){
         for titleView in allTitleViews() {
             var frame = titleView.frame

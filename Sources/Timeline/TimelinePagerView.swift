@@ -236,13 +236,10 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     private func updateStyleOfTimelineContainer(controller: TimelineContainerController) {
         let container = controller.container
         let timeline = controller.timeline
-        let currentVerticalDiff = timeline.style.verticalDiff
         var zoomedStyle = TimelineStyle();
         zoomedStyle.verticalDiff = (style.verticalDiff * heightScaleFactor)
         timeline.updateStyle(zoomedStyle)
-        timeline.offsetColumnTitle(xFactor: 0,
-                                   yFactor: (zoomedStyle.verticalDiff/currentVerticalDiff),
-                                   animated: false)
+        
         container.backgroundColor = style.backgroundColor
     }
     
@@ -312,10 +309,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
             scrollView.contentOffset = offset
             
-                // adjust the columnTitles
-            currentTimeline?.container.timeline.offsetColumnTitle(xDiff: 0,
-                                                                  yDiff: offset.y - previousDraggingOffset.y,
-                                                                  animated: false)
             previousDraggingOffset = offset
             
             let diffX = offset.x - initialContentOffset.x
