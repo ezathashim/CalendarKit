@@ -481,77 +481,6 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     }
     
     
-    public func hideColumnTitles(_ animated : Bool) {
-        if (animated == false){
-            UIView.performWithoutAnimation {
-                reallyHideColumnTitles()
-            }
-            return
-        }
-        UIView.animate(withDuration: animationDuration) {
-            self.reallyHideColumnTitles()
-        }
-    }
-    
-    
-    private func reallyHideColumnTitles() {
-        var needToHide = false
-        let allTitleViews = allTitleViews()
-        for view in allTitleViews{
-            if (view.alpha.isZero == false){
-                needToHide = true
-                break
-            }
-        }
-        if (needToHide == false){
-            return
-        }
-        for titleView in allTitleViews {
-            var frame = titleView.frame
-            frame.origin.y = 0
-            titleView.frame = frame
-            titleView.alpha = 0
-        }
-    }
-    
-    
-    public func showColumnTitles(_ animated : Bool) {
-        if (animated == false){
-            UIView.performWithoutAnimation {
-                reallyShowColumnTitles()
-            }
-            return
-        }
-        UIView.animate(withDuration: animationDuration) {
-            self.reallyShowColumnTitles()
-        }
-    }
-    
-    
-    public func reallyShowColumnTitles() {
-        var needToShow = false
-        let allTitleViews = allTitleViews()
-        for view in allTitleViews {
-            if (view.alpha.isZero == true){
-                needToShow = true
-                break
-            }
-        }
-        if (needToShow == false){
-            return
-        }
-        
-        let viewInset : CGFloat = 8
-        let topDate = visibleInterval()?.start ?? yToDate(1);
-        let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
-        for titleView in allTitleViews{
-            var frame = titleView.frame
-            frame.origin.y = yPoint
-            titleView.frame = frame
-            titleView.alpha = 1
-        }
-    }
-    
     public func layoutColumnTitles(_ animated : Bool) {
         if (animated == false){
             UIView.performWithoutAnimation {
@@ -565,7 +494,29 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     }
     
     
+    private var titleViewTopConstraints = [NSLayoutConstraint]()
+    private var titleViewLeadingConstraints = [NSLayoutConstraint]()
+    private var titleViewWidthConstraints = [NSLayoutConstraint]()
+
     private func reallyLayoutColumnTitles() {
+        
+            // clear the constraints
+        for constraint in titleViewTopConstraints {
+            constraint.isActive = false
+        }
+        titleViewTopConstraints.removeAll()
+        
+        for constraint in titleViewLeadingConstraints {
+            constraint.isActive = false
+        }
+        titleViewLeadingConstraints.removeAll()
+        
+        for constraint in titleViewWidthConstraints {
+            constraint.isActive = false
+        }
+        titleViewWidthConstraints.removeAll()
+        
+        
         let viewInset : CGFloat = 8
         let topDate = visibleInterval()?.start ?? yToDate(1);
         let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
@@ -587,11 +538,11 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                     // add a view
                 titleView.text = trimmed
                 if (titleView.superview != self){
-                    self.addSubview(titleView)
+                    addSubview(titleView)
                 }
                 titleView.superview?.bringSubviewToFront(titleView)
                 
-                let columnFrame = self.frameForColumn(columnIndex: index)
+                let columnFrame = frameForColumn(columnIndex: index)
                 let fittingFrame = titleView.sizeThatFits(columnFrame.size)
                 
                 let frame = CGRect(x: columnFrame.origin.x + viewInset,
@@ -599,6 +550,46 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                                    width: columnFrame.width - viewInset * 2,
                                    height: fittingFrame.height)
                 titleView.frame = frame
+                
+                
+                    // constraints
+                titleView.translatesAutoresizingMaskIntoConstraints = false
+                
+                    // top constraint
+                let topConstraint = NSLayoutConstraint(item: titleView,
+                                                       attribute: NSLayoutConstraint.Attribute.top,
+                                                       relatedBy: NSLayoutConstraint.Relation.equal,
+                                                       toItem: allDayView,
+                                                       attribute: NSLayoutConstraint.Attribute.bottom,
+                                                       multiplier: 1,
+                                                       constant: 12)
+                topConstraint.isActive = true
+                titleViewTopConstraints.append(topConstraint)
+                
+                
+                    // leading
+                    // should adjust constant in self frame set
+                let leadingConstraint = NSLayoutConstraint(item: titleView,
+                                                         attribute: NSLayoutConstraint.Attribute.leading,
+                                                         relatedBy: NSLayoutConstraint.Relation.equal,
+                                                         toItem: self,
+                                                         attribute: NSLayoutConstraint.Attribute.leading,
+                                                         multiplier: 1,
+                                                         constant: frame.origin.x)
+                leadingConstraint.isActive = true
+                titleViewLeadingConstraints.append(leadingConstraint)
+                
+                    // width
+                    // should adjust constant in self frame set
+                let widthConstraint = NSLayoutConstraint(item: titleView,
+                                                         attribute: NSLayoutConstraint.Attribute.width,
+                                                         relatedBy: NSLayoutConstraint.Relation.equal,
+                                                         toItem: nil,
+                                                         attribute: NSLayoutConstraint.Attribute.notAnAttribute,
+                                                         multiplier: 1,
+                                                         constant: frame.size.width)
+                widthConstraint.isActive = true
+                titleViewWidthConstraints.append(widthConstraint)
             }
         }
     }

@@ -332,7 +332,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
         if (draggingVertically == true){
-            currentTimeline?.container.timeline.hideColumnTitles(false)
+        
         }
     }
     
@@ -348,7 +348,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         currentTimeline?.container.timeline.layoutColumnTitles(false)
-        currentTimeline?.container.timeline.showColumnTitles(true)
     }
     
     
@@ -538,8 +537,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
         
         if (sender.state == .began) {
-            currentTimeline?.container.timeline.hideColumnTitles(true)
-            
             return;
         }
         
@@ -601,7 +598,6 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         
         if (sender.state == .ended) {
             currentTimeline?.container.timeline.layoutColumnTitles(false)
-            currentTimeline?.container.timeline.showColumnTitles(true)
             
             return;
         }
