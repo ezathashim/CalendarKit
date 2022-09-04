@@ -514,8 +514,6 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         
         
         let viewInset : CGFloat = 8
-        let topDate = visibleInterval()?.start ?? yToDate(1);
-        let yPoint = dateToY(topDate) + allDayViewHeight + viewInset
         
         let allTitleViews = allTitleViews()
         for titleView in allTitleViews {
@@ -542,7 +540,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                 let fittingFrame = titleView.sizeThatFits(columnFrame.size)
                 
                 let frame = CGRect(x: columnFrame.origin.x + viewInset,
-                                   y: yPoint,
+                                   y: titleView.frame.origin.y,
                                    width: columnFrame.width - viewInset * 2,
                                    height: fittingFrame.height)
                 titleView.frame = frame
