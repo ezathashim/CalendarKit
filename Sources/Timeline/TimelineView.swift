@@ -562,7 +562,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                                                        toItem: allDayView,
                                                        attribute: NSLayoutConstraint.Attribute.bottom,
                                                        multiplier: 1,
-                                                       constant: 12)
+                                                       constant: 8)
                 topConstraint.isActive = true
                 titleViewTopConstraints.append(topConstraint)
                 
