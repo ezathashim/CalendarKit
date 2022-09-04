@@ -501,19 +501,15 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     private func reallyLayoutColumnTitles() {
         
             // clear the constraints
-        for constraint in titleViewTopConstraints {
-            constraint.isActive = false
-        }
+        var allContraints = [NSLayoutConstraint]()
+        allContraints.append(contentsOf: titleViewTopConstraints)
+        allContraints.append(contentsOf: titleViewLeadingConstraints)
+        allContraints.append(contentsOf: titleViewWidthConstraints)
+        
+        NSLayoutConstraint.deactivate(allContraints);
+        
         titleViewTopConstraints.removeAll()
-        
-        for constraint in titleViewLeadingConstraints {
-            constraint.isActive = false
-        }
         titleViewLeadingConstraints.removeAll()
-        
-        for constraint in titleViewWidthConstraints {
-            constraint.isActive = false
-        }
         titleViewWidthConstraints.removeAll()
         
         
@@ -563,12 +559,10 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                                                        attribute: NSLayoutConstraint.Attribute.bottom,
                                                        multiplier: 1,
                                                        constant: 8)
-                topConstraint.isActive = true
                 titleViewTopConstraints.append(topConstraint)
                 
                 
                     // leading
-                    // should adjust constant in self frame set
                 let leadingConstraint = NSLayoutConstraint(item: titleView,
                                                          attribute: NSLayoutConstraint.Attribute.leading,
                                                          relatedBy: NSLayoutConstraint.Relation.equal,
@@ -576,11 +570,9 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                                                          attribute: NSLayoutConstraint.Attribute.leading,
                                                          multiplier: 1,
                                                          constant: frame.origin.x)
-                leadingConstraint.isActive = true
                 titleViewLeadingConstraints.append(leadingConstraint)
                 
                     // width
-                    // should adjust constant in self frame set
                 let widthConstraint = NSLayoutConstraint(item: titleView,
                                                          attribute: NSLayoutConstraint.Attribute.width,
                                                          relatedBy: NSLayoutConstraint.Relation.equal,
@@ -588,9 +580,16 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                                                          attribute: NSLayoutConstraint.Attribute.notAnAttribute,
                                                          multiplier: 1,
                                                          constant: frame.size.width)
-                widthConstraint.isActive = true
                 titleViewWidthConstraints.append(widthConstraint)
             }
+            
+            allContraints.removeAll()
+            allContraints.append(contentsOf: titleViewTopConstraints)
+            allContraints.append(contentsOf: titleViewLeadingConstraints)
+            allContraints.append(contentsOf: titleViewWidthConstraints)
+            
+            NSLayoutConstraint.activate(allContraints);
+            
         }
     }
     
