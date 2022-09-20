@@ -326,7 +326,11 @@ import UIKit
                                                      options: [.truncatesLastVisibleLine, .usesLineFragmentOrigin],
                                                      context: nil)
         
-        let width = fminf(Float(statusRect.size.width), Float(pendingRect.size.width));
+        let maxWidth = Float(statusRect.width - imageWidth - xInset - xInset);
+        var width = fminf(Float(statusRect.size.width), Float(pendingRect.size.width));
+        if (width > maxWidth){
+            width = maxWidth;
+        }
         let height = fminf(Float(statusRect.size.height), Float(pendingRect.size.height));
         
         statusRect.size.width = CGFloat(width)
