@@ -1206,9 +1206,24 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                         continue
                     }
                 } else {
+                        // duration is NSTimeInterval (seconds)
+                        // verticalDiff is points/60 minutes, so 60/verticalDiff = minutes per point
+                        // eventGap is points of vertical diff, so eventGap * 60 / verticalDiff is eventGap in minutes
+                    var longestIntersects = false
+                    if let longestOverlap = longestEvent.descriptor.dateInterval.intersection(with:event.descriptor.dateInterval){
+                        longestIntersects = longestOverlap.duration/60 >= style.eventGap * 60 / style.verticalDiff
+                    }
+                    
                     let lastEvent = overlappingEvents.last!
-                    if (longestEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (longestEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) ||
-                        (lastEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (lastEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) {
+                    var lastIntersects = false
+                    if let lastOverlap = lastEvent.descriptor.dateInterval.intersection(with:event.descriptor.dateInterval){
+                        lastIntersects = lastOverlap.duration/60 >= style.eventGap * 60 / style.verticalDiff
+                    }
+
+                    if (longestIntersects &&
+                        (longestEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start)) ||
+                        (lastIntersects &&
+                         (lastEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start)) {
                         overlappingEvents.append(event)
                         continue
                     }
