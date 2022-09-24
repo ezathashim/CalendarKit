@@ -18,6 +18,10 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     public weak var delegate: TimelineViewDelegate?
     public let timeSidebarWidth : CGFloat = 53
     
+        // layout is sorted by event startTime by default
+        // if we want to conserve the sorting from the source data array, set this to false
+    public let sortEventLayoutByStartTime : Bool = true
+    
     public var date = Date() {
         didSet {
             setNeedsLayout()
@@ -1237,8 +1241,22 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         overlappingEvents.removeAll()
         
         for overlappingEvents in groupsOfEvents {
-            let totalCount = CGFloat(overlappingEvents.count)
-            for (index, event) in overlappingEvents.enumerated() {
+            
+            var orderedOverlappingEvents = [EventLayoutAttributes]()
+            if (sortEventLayoutByStartTime == true){
+                    // keep the sorting from this API
+                orderedOverlappingEvents = overlappingEvents
+            } else {
+                    // regain the sorting from the source (regularLayoutAttributes)
+                for event in self.regularLayoutAttributes {
+                    if (overlappingEvents.firstIndex(where: { $0 === event }) != nil) {
+                        orderedOverlappingEvents.append(event)
+                    }
+                }
+            }
+            
+            let totalCount = CGFloat(orderedOverlappingEvents.count)
+            for (index, event) in orderedOverlappingEvents.enumerated() {
                 let eventSoloFrame = frameForDescriptor(event.descriptor)
                 let sharedWidth = eventSoloFrame.size.width / totalCount
                 let floatIndex = CGFloat(index)
