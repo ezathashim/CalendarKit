@@ -16,6 +16,7 @@ import UIKit
     func openIntervalForDate(_ date: Date) -> NSDateInterval
     
         // optional dataSource API
+    @objc optional func sortEventLayoutByStartTimeForDate(_ date: Date)  -> Bool
     @objc optional func numberOfColumnsForDate(_ date: Date) -> NSInteger
     @objc optional func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
     @objc optional func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
@@ -307,6 +308,10 @@ public class DayView: UIView, TimelinePagerViewDelegate {
     
     
         // optional API
+    public func sortEventLayoutByStartTimeForDate(_ date: Date)  -> Bool {
+        return delegate?.sortEventLayoutByStartTimeForDate?(date) ?? true
+    }
+
     
     public func numberOfColumnsForDate(_ date: Date) -> NSInteger {
         guard var columnNumber = delegate?.numberOfColumnsForDate?(date) else {

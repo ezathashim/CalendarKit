@@ -7,6 +7,7 @@ public protocol TimelineViewDelegate: AnyObject {
     func timelineView(_ timelineView: TimelineView, didTapCornerImage event: EventView, imageIndex : NSInteger)
     func timelineView(_ timelineView: TimelineView, didLongPress event: EventView)
     func openIntervalForDate(_ date: Date) -> NSDateInterval
+    func sortEventLayoutByStartTimeForDate(_ date: Date)  -> Bool?
     func numberOfColumnsForDate(_ date: Date)  -> NSInteger
     func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
     func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
@@ -17,10 +18,6 @@ public protocol TimelineViewDelegate: AnyObject {
 public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     public weak var delegate: TimelineViewDelegate?
     public let timeSidebarWidth : CGFloat = 53
-    
-        // layout is sorted by event startTime by default
-        // if we want to conserve the sorting from the source data array, set this to false
-    public let sortEventLayoutByStartTime : Bool = true
     
     public var date = Date() {
         didSet {
@@ -1239,6 +1236,8 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         
         groupsOfEvents.append(overlappingEvents)
         overlappingEvents.removeAll()
+        
+        let sortEventLayoutByStartTime = delegate?.sortEventLayoutByStartTimeForDate(date) ?? true
         
         for overlappingEvents in groupsOfEvents {
             

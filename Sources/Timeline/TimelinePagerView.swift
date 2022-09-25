@@ -26,6 +26,7 @@ public protocol TimelinePagerViewDelegate: AnyObject {
     func openIntervalForDate(_ date: Date) -> NSDateInterval
     
         // optional dataSource API
+    func sortEventLayoutByStartTimeForDate(_ date: Date)  -> Bool
     func numberOfColumnsForDate(_ date: Date)  -> NSInteger
     func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
     func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
@@ -902,6 +903,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     
         // MARK: TimelineDelegate Columns
+    public func sortEventLayoutByStartTimeForDate(_ date: Date)  -> Bool? {
+        return delegate?.sortEventLayoutByStartTimeForDate(date) ?? true
+    }
     
     public func numberOfColumnsForDate(_ date: Date) -> NSInteger {
         guard var columnNumber = delegate?.numberOfColumnsForDate(date) else {
