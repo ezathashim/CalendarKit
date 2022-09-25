@@ -611,8 +611,13 @@ import UIKit
             }
             
             
-                // add a margin equal to the background color
-            context.setStrokeColor(UIColor.white.cgColor)
+                // add a margin
+            var lineColor = UIColor.black
+            if (UITraitCollection.current.userInterfaceStyle == .dark){
+                lineColor = UIColor.white
+            }
+            lineColor = lineColor.withAlphaComponent(0.55)
+            context.setStrokeColor(lineColor.cgColor)
             circlePath.lineWidth = 2
             circlePath.stroke()
             
