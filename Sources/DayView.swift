@@ -206,8 +206,8 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         timelinePagerView.scrollToNowTime(animated: animated)
     }
     
-    public func reloadData() {
-        timelinePagerView.reloadData()
+    public func reloadData(completionHandler: (() -> Void)! = nil) {
+        timelinePagerView.reloadData(completionHandler: completionHandler)
     }
     
     @objc public func move(to date: Date) {

@@ -86,7 +86,8 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 delegate?.timelinePagerDidChangeHeightScaleFactor(timelinePager: self)
                 
                 updateStyle(style)
-                reloadData()
+                reloadData(completionHandler: nil)
+                
             }
         }
     }
@@ -345,9 +346,12 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     
-    public func reloadData() {
+    public func reloadData(completionHandler: (() -> Void)! = nil) {
         DispatchQueue.main.async {
             self.reallyReloadData()
+            if (completionHandler != nil){
+                completionHandler()
+            }
         }
     }
     

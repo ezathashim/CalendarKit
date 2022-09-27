@@ -45,7 +45,7 @@ import UIKit
     view.tintColor = SystemColors.systemRed
     dataSource = self
     delegate = self
-    dayView.reloadData()
+    dayView.reloadData(completionHandler: nil)
 
     let sizeClass = traitCollection.horizontalSizeClass
     configureDayViewLayoutForHorizontalSizeClass(sizeClass)
@@ -71,8 +71,8 @@ import UIKit
     dayView.move(to: date)
   }
 
-  @objc open func reloadData() {
-    dayView.reloadData()
+  @objc open func reloadData(completionHandler: (() -> Void)! = nil) {
+      dayView.reloadData(completionHandler: completionHandler)
   }
 
   open func updateStyle(_ newStyle: CalendarStyle) {
