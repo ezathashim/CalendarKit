@@ -376,7 +376,28 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         let end = calendar.date(byAdding: .day, value: 1, to: date)!
         let day = DateInterval(start: date, end: end)
         let validEvents = events.filter{$0.dateInterval.intersects(day)}
-        timeline.layoutAttributes = validEvents.map(EventLayoutAttributes.init)
+        let layoutAttributes = validEvents.map(EventLayoutAttributes.init)
+        
+            // get column information
+            // total columns
+        let totalColumnCount = numberOfColumnsForDate(date)
+        
+            // titles
+        var columnTitles = [NSString]()
+        for colNum in 1...totalColumnCount {
+            let colIndex = colNum - 1
+            let title = titleOfColumnForDate(date, columnIndex:  colIndex)
+            columnTitles.append(title)
+        }
+        
+            // add columnIndex values to layout objects
+        for eventLayout in layoutAttributes {
+            let colIndex = columnIndexForDescriptor(eventLayout.descriptor, date: date)
+            eventLayout.columnIndex = colIndex
+        }
+        
+        
+        timeline.loadWith(attributes: layoutAttributes, columnTitles: columnTitles)
     }
     
     public func scrollToFirstEventIfNeeded(animated: Bool) {
@@ -690,7 +711,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 let leftToRight = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .leftToRight
                 let x = leftToRight ? style.leadingInset : 0
                 
-                let colIndex = timeline.delegate?.columnIndexForDescriptor(editedEventView.descriptor!, date: timeline.date) ?? 0
+                let colIndex = timeline.columnIndexFor(descriptor: editedEventView.descriptor!)
                 let colCorrectionX = editedEventView.frame.width * CGFloat(colIndex) - currentTimeline.container.contentOffset.x
                 
                 var eventFrame = editedEventView.frame

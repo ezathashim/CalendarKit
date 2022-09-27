@@ -43,7 +43,7 @@ public final class TimelineContainer: UIScrollView {
     }
     
     public func updateTimelineFrame() {
-        let totalColumnNumber = timeline.delegate?.numberOfColumnsForDate(timeline.date) ?? 1
+        let totalColumnNumber = timeline.numberOfColumns()
         var colWidth = (bounds.width - timeline.timeSidebarWidth) / CGFloat(totalColumnNumber)
         if (colWidth < minColWidth){
             colWidth = minColWidth

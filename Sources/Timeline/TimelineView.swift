@@ -8,9 +8,6 @@ public protocol TimelineViewDelegate: AnyObject {
     func timelineView(_ timelineView: TimelineView, didLongPress event: EventView)
     func openIntervalForDate(_ date: Date) -> NSDateInterval
     func sortEventLayoutByStartTimeForDate(_ date: Date)  -> Bool?
-    func numberOfColumnsForDate(_ date: Date)  -> NSInteger
-    func titleOfColumnForDate(_ date: Date, columnIndex: NSInteger) -> NSString
-    func columnIndexForDescriptor(_ descriptor: EventDescriptor, date: Date) -> NSInteger
     func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtStatusPoint point: CGPoint) -> UIContextMenuConfiguration?
     func timelineView(_ timelineView: TimelineView, event: EventView, menuConfigurationAtCornerImagePoint point: CGPoint, imageIndex : NSInteger) -> UIContextMenuConfiguration?
 }
@@ -33,7 +30,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     public private(set) var regularLayoutAttributes = [EventLayoutAttributes]()
     public private(set) var allDayLayoutAttributes = [EventLayoutAttributes]()
     
-    public var layoutAttributes: [EventLayoutAttributes] {
+    private var layoutAttributes: [EventLayoutAttributes] {
         get {
             allDayLayoutAttributes + regularLayoutAttributes
         }
@@ -50,17 +47,10 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                     regularLayoutAttributes.append(anEventLayoutAttribute)
                 }
             }
-            
-            recalculateEventLayout()
-            prepareEventViews()
-            allDayView.events = allDayLayoutAttributes.map { $0.descriptor }
-            allDayView.isHidden = allDayLayoutAttributes.count == 0
-            allDayView.scrollToBottom()
-            
-            setNeedsLayout()
-            setNeedsDisplay()
         }
     }
+    
+    
     private var pool = ReusePool<EventView>()
     
     public var firstEvent: EventDescriptor? {
@@ -74,6 +64,53 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         let firstEventPosition = firstEvent.frame.origin.y
         let beginningOfDayPosition = dateToY(date)
         return max(firstEventPosition, beginningOfDayPosition)
+    }
+    
+    
+    private var _regularColumnCount : NSInteger = 1
+    private var regularColumnCount: NSInteger {
+        get { return _regularColumnCount }
+        set {
+            var cnt = newValue
+            if (cnt < 1) {
+                cnt = 1
+            }
+            _regularColumnCount = cnt
+        }
+    }
+    
+    private var _regularColumnTitles :  [NSString] =  [""]
+    private var regularColumnTitles: [NSString] {
+        get { return _regularColumnTitles }
+        set {
+            var array = newValue
+            if (array.count < 1) {
+                array.append("")
+            }
+            _regularColumnTitles = array
+            
+            regularColumnCount = _regularColumnTitles.count
+        }
+    }
+    
+    public func numberOfColumns() -> NSInteger {
+        return regularColumnCount
+    }
+        
+    public func loadWith(attributes: [EventLayoutAttributes], columnTitles: [NSString]) {
+        
+        regularColumnTitles = columnTitles
+        layoutAttributes = attributes;
+        
+            // layout calculations
+        recalculateEventLayout()
+        prepareEventViews()
+        allDayView.events = allDayLayoutAttributes.map { $0.descriptor }
+        allDayView.isHidden = allDayLayoutAttributes.count == 0
+        allDayView.scrollToBottom()
+        
+        setNeedsLayout()
+        setNeedsDisplay()
     }
     
     
@@ -94,8 +131,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
             }
         }
         
-        let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
-        if (totalColumnCount == 1){
+        if (regularColumnCount == 1){
             return xOrigin
         }
         
@@ -350,14 +386,14 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     private func allTitleViews() ->[TimelineColumnTitleView]{
         var array = [TimelineColumnTitleView]()
         
-        guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
+        if (regularColumnCount == 0){
             discardTitles()
             return array
         }
-        while (_titleViews.count < totalColumnCount){
+        while (_titleViews.count < regularColumnCount){
             _titleViews.append(TimelineColumnTitleView())
         }
-        while (_titleViews.count > (totalColumnCount + 1)){
+        while (_titleViews.count > (regularColumnCount + 1)){
             _titleViews.last?.removeFromSuperview()
             _titleViews.removeLast()
         }
@@ -420,14 +456,15 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     
     public func columnTitleGreatestHeight() -> CGFloat{
         var h = 0.0
+        let titlesCount = regularColumnTitles.count
         let allTitleViews = allTitleViews()
         for titleView in allTitleViews {
             if let index = allTitleViews.firstIndex(of: titleView){
-                let title = delegate?.titleOfColumnForDate(date, columnIndex: index)
-                if (title == nil){
+                if (index >= titlesCount){
                     continue
                 }
-                let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
+                let title = regularColumnTitles[index]
+                let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
                 if (trimmed.count == 0){
                     continue
                 }
@@ -475,15 +512,17 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         
         let viewInset : CGFloat = 8
         
+        let titlesCount = regularColumnTitles.count
         let allTitleViews = allTitleViews()
         for titleView in allTitleViews {
             if let index = allTitleViews.firstIndex(of: titleView){
-                let title = delegate?.titleOfColumnForDate(date, columnIndex: index)
-                if (title == nil){
+                if (index >= titlesCount){
                     titleView.removeFromSuperview()
                     continue
                 }
-                let trimmed = title!.trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                let title = regularColumnTitles[index]
+                let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
                 if (trimmed.count == 0){
                     titleView.removeFromSuperview()
                     continue
@@ -556,12 +595,11 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         // although, we need to consider the total width based on device
     private func columnIndexAtPoint(_ point : CGPoint) -> NSInteger {
         
-        let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
-        if (totalColumnCount == 1){
+        if (regularColumnCount == 1){
             return 0
         }
         
-        for colNum in 1...totalColumnCount {
+        for colNum in 1...regularColumnCount {
             let colIndex = colNum - 1
             let colFrame = frameForColumn(columnIndex: colIndex)
             if colFrame.contains(point){
@@ -573,14 +611,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     
     private func frameForColumn(columnIndex : NSInteger) -> CGRect {
         
-        guard let totalColumnCount = delegate?.numberOfColumnsForDate(date) else {
-            return CGRect(x: 0,
-                          y: 0,
-                          width: bounds.width,
-                          height: fullHeight)
-        }
-        
-        if (columnIndex >= totalColumnCount){
+        if (columnIndex >= regularColumnCount){
             return CGRect(x: 0,
                           y: 0,
                           width: bounds.width,
@@ -599,7 +630,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         
             // divide the width by totalColumn - timeline.timeSidebarWidth
         let totalWidth = bounds.width - timeSidebarWidth
-        let columnWidth = totalWidth / CGFloat(totalColumnCount)
+        let columnWidth = totalWidth / CGFloat(regularColumnCount)
         let xPoint = columnWidth * CGFloat(columnIndex) + xInset
         
         return CGRect(x: xPoint,
@@ -610,9 +641,16 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
     }
     
     
+    public func columnIndexFor(descriptor: EventDescriptor) -> NSInteger {
+        guard let index = regularLayoutAttributes.firstIndex(where: {$0.descriptor === descriptor}) else {
+            return 0
+        }
+        let eventLayout = regularLayoutAttributes[index]
+        return eventLayout.columnIndex
+    }
+    
     public func frameForDescriptor(_ descriptor : EventDescriptor) -> CGRect {
-        let eventColIndex = delegate?.columnIndexForDescriptor( descriptor,
-                                                                date: date) ?? 0
+        let eventColIndex = columnIndexFor(descriptor: descriptor)
         let frame = frameForColumn(columnIndex: eventColIndex)
         let startY = dateToY(descriptor.dateInterval.start)
         let endY = dateToY(descriptor.dateInterval.end)
@@ -1000,7 +1038,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
                 }
             }()
             
-            let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
+            let totalColumnCount = regularColumnCount
             let totalWidth = abs(xEnd - xStart)
             var eachColWidth = CGFloat(totalWidth) / CGFloat(totalColumnCount)
             eachColWidth = 1 * floor(((eachColWidth)/1)+0.5);
@@ -1159,14 +1197,12 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         
             // subsort by column
         var subsortedEvents = [[EventLayoutAttributes]]()
-        let totalColumnCount = delegate?.numberOfColumnsForDate(date) ?? 1
-        for colNum in 1...totalColumnCount {
+        for colNum in 1...regularColumnCount {
             let colIndex = colNum - 1
             
             var colEvents = [EventLayoutAttributes]()
             for event in sortedEvents {
-                let eventColIndex = delegate?.columnIndexForDescriptor( event.descriptor,
-                                                                        date: date) ?? 0
+                let eventColIndex = event.columnIndex
                 if (eventColIndex == colIndex){
                     colEvents.append(event)
                 }
