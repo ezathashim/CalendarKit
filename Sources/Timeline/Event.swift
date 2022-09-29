@@ -9,6 +9,8 @@ import UIKit
   public var secondaryText : String?
   public var secondaryAttributedText: NSAttributedString?
     
+  public var overlayText: String?
+    
     //public var lineBreakMode: NSLineBreakMode?
   public var lineBreakModeValue: NSNumber?
 

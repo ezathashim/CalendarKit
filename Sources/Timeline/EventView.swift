@@ -240,6 +240,19 @@ import UIKit
     }
     
     
+    private func rectByCenteringSizeInRectWithoutScaling(rect: CGRect, size : CGSize) -> CGRect{
+        let extraWidth = CGRectGetWidth(rect) - size.width;
+        let extraHeight = CGRectGetHeight(rect) - size.height;
+        
+        var result = rect;
+        result.size = size;
+        result.origin.x += CGFloat(floorf(Float(extraWidth) / 2.0));
+        result.origin.y += CGFloat(floorf(Float(extraHeight) / 2.0));
+        
+        return result;
+    }
+
+    
     private func centerPoint(_ r: CGRect) -> CGPoint{
         let x = r.origin.x + r.size.width/CGFloat(2.0);
         let y = r.origin.y + r.size.height/CGFloat(2.0);
@@ -634,7 +647,71 @@ import UIKit
             
         }
         
+        
+            // overlay text
+        
+        if let overlayString = descriptor?.overlayText {
+            
+                // target rect
+            let overlayRect = rect.insetBy(dx: 20, dy: 20)
+            
+            if ((overlayRect.width > 0) &&
+                (overlayRect.height > 0)){
+                
+                    // draw string
+                let paragraphStyle: NSMutableParagraphStyle = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
+                paragraphStyle.lineBreakMode = .byWordWrapping
+                paragraphStyle.alignment = .center
+                let font = UIFont.systemFont(ofSize: 12, weight: .heavy)
+                    //paragraphStyle.minimumLineHeight = overlayRect.height / 2 + font.lineHeight / 2
+                let attributes = [NSAttributedString.Key.paragraphStyle: paragraphStyle,
+                                  NSAttributedString.Key.foregroundColor: UIColor.white,
+                                  NSAttributedString.Key.font: font]
+                
+                let overlayAttString = NSAttributedString(string: overlayString,
+                                                          attributes: attributes)
+                
+                let overlaySize = CGSize(width:  overlayRect.size.width, height: CGFloat.greatestFiniteMagnitude)
+                let pendingRect = overlayAttString.boundingRect(with: overlaySize,
+                                                                options: [.usesFontLeading, .usesLineFragmentOrigin],
+                                                                context: nil)
+                
+                
+                if ((pendingRect.width <= overlayRect.width) &&
+                    (pendingRect.height <= overlayRect.height) &&
+                    (pendingRect.width > 0) &&
+                    (pendingRect.height > 0)){
+                    
+                    let overlayDrawRect = rectByCenteringSizeInRectWithoutScaling(rect: overlayRect, size: pendingRect.size)
+                    
+                        // draw background
+                        // outset by 8
+                    
+                    let overlayBackgroundRect = overlayDrawRect.insetBy(dx: -8, dy: -8)
+                    let backgroundPath = UIBezierPath(roundedRect: overlayBackgroundRect, cornerRadius: 10)
+                    let overlayBackgroundColor = UIColor.systemYellow.withAlphaComponent(0.9)
+                    
+                    context.saveGState()
+                    
+                    context.setStrokeColor(UIColor.systemYellow.cgColor)
+                    backgroundPath.lineWidth = 4
+                    backgroundPath.stroke()
+                    
+                    
+                    context.setFillColor(overlayBackgroundColor.cgColor)
+                    backgroundPath.fill()
+                    
+                    overlayAttString.draw(in: overlayDrawRect)
+                    
+                    context.restoreGState()
+                    
+                }
+            }
+        }
+        
     }
+    
+    
     
     private var drawsShadow = false
     

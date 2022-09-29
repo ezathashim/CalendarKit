@@ -10,6 +10,11 @@ import UIKit
   var secondaryText: String? {get}
   var secondaryAttributedText: NSAttributedString? {get}
     
+        // will overlay at the center of the EventView
+        // not drawn if goes out of bounds so used for short text
+        // added to API to show changes in DateInterval during drag
+  var overlayText: String? {get}
+    
         // for @objc I cannot use NSLineBreakMode variable
         // convert the code to use an NSNumber instead
   //var lineBreakMode: NSLineBreakMode? {get}
