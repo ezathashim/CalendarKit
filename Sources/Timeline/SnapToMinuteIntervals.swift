@@ -1,15 +1,25 @@
 import Foundation
 
+public enum MinuteInterval: Int {
+    case minutes_5 = 5
+    case minutes_10 = 10
+    case minutes_15 = 15
+    case minutes_20 = 20
+    case minutes_25 = 25
+    case minutes_30 = 30
+}
+
+
 public struct SnapToMinuteIntervals: EventEditingSnappingBehavior {
   public var calendar = Calendar.autoupdatingCurrent
-  public var intervalMinutes = 5
+  public var interval : MinuteInterval = .minutes_5
   
   public init(_ calendar: Calendar = Calendar.autoupdatingCurrent) {
     self.calendar = calendar
   }
 
   public func nearestDate(to date: Date) -> Date {
-    let unit: Double = Double(intervalMinutes / 2)
+      let unit: Double = Double(interval.rawValue / 2)
     var accentedHour = Int(self.accentedHour(for: date))
     let minute = Double(component(.minute, from: date))
     if (60 - unit)...59 ~= minute {
@@ -38,7 +48,7 @@ public struct SnapToMinuteIntervals: EventEditingSnappingBehavior {
 
   public func accentedMinute(for date: Date) -> Int {
     let minute = Double(component(.minute, from: date))
-    let value = intervalMinutes * Int(round(minute / Double(intervalMinutes)))
+      let value = interval.rawValue * Int(round(minute / Double(interval.rawValue)))
     return value < 60 ? value : 0
   }
   

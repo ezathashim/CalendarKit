@@ -161,6 +161,10 @@ public class DayView: UIView, TimelinePagerViewDelegate {
         timelinePagerView.updateStyle(style.timeline)
     }
     
+    public func updateSnappingBehavior(_ eventEditingSnappingBehavior: EventEditingSnappingBehavior) {
+        timelinePagerView.eventEditingSnappingBehavior = eventEditingSnappingBehavior
+    }
+    
     public func timelinePanGestureRequire(toFail gesture: UIGestureRecognizer) {
         timelinePagerView.timelinePanGestureRequire(toFail: gesture)
     }
