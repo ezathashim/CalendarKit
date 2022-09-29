@@ -1,14 +1,15 @@
 import Foundation
 
-public struct SnapTo15MinuteIntervals: EventEditingSnappingBehavior {
+public struct SnapToMinuteIntervals: EventEditingSnappingBehavior {
   public var calendar = Calendar.autoupdatingCurrent
+  public var intervalMinutes = 5
   
   public init(_ calendar: Calendar = Calendar.autoupdatingCurrent) {
     self.calendar = calendar
   }
 
   public func nearestDate(to date: Date) -> Date {
-    let unit: Double = 60 / 4 / 2
+    let unit: Double = Double(intervalMinutes / 2)
     var accentedHour = Int(self.accentedHour(for: date))
     let minute = Double(component(.minute, from: date))
     if (60 - unit)...59 ~= minute {
@@ -37,8 +38,7 @@ public struct SnapTo15MinuteIntervals: EventEditingSnappingBehavior {
 
   public func accentedMinute(for date: Date) -> Int {
     let minute = Double(component(.minute, from: date))
-    let interval = 15
-    let value = interval * Int(round(minute / Double(interval)))
+    let value = intervalMinutes * Int(round(minute / Double(intervalMinutes)))
     return value < 60 ? value : 0
   }
   

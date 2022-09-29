@@ -154,19 +154,19 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     
     public init(calendar: Calendar) {
         self.calendar = calendar
-        self.eventEditingSnappingBehavior = SnapTo15MinuteIntervals(calendar)
+        self.eventEditingSnappingBehavior = SnapToMinuteIntervals(calendar)
         super.init(frame: .zero)
         configure()
     }
     
     override public init(frame: CGRect) {
-        self.eventEditingSnappingBehavior = SnapTo15MinuteIntervals(calendar)
+        self.eventEditingSnappingBehavior = SnapToMinuteIntervals(calendar)
         super.init(frame: frame)
         configure()
     }
     
     required public init?(coder aDecoder: NSCoder) {
-        self.eventEditingSnappingBehavior = SnapTo15MinuteIntervals(calendar)
+        self.eventEditingSnappingBehavior = SnapToMinuteIntervals(calendar)
         super.init(coder: aDecoder)
         configure()
     }
@@ -785,6 +785,14 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
     }
     
     private func update(descriptor: EventDescriptor, with eventView: EventView) {
+        guard let dateInterval = dateInterval(for: eventView) else {
+            return
+        }
+        descriptor.dateInterval = dateInterval
+    }
+    
+    
+    private func dateInterval(for eventView: EventView) -> DateInterval? {
         if let currentTimeline = currentTimeline {
             let timeline = currentTimeline.timeline
             let eventFrame = eventView.frame
@@ -793,13 +801,13 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             let endY = converted.maxY
             let beginning = timeline.yToDate(beginningY)
             let end = timeline.yToDate(endY)
-            descriptor.dateInterval = DateInterval(start: beginning, end: end)
+            return DateInterval(start: beginning, end: end)
         }
+        return nil
     }
     
     
     private func snappedDateIntervalForEditedEventView() -> DateInterval? {
-        
         if let currentTimeline = currentTimeline {
             let timeline = currentTimeline.timeline
             if let editedEventView = editedEventView,

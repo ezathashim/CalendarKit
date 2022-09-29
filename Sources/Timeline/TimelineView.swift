@@ -271,7 +271,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         }
     }
     
-    public var eventEditingSnappingBehavior: EventEditingSnappingBehavior = SnapTo15MinuteIntervals() {
+    public var eventEditingSnappingBehavior: EventEditingSnappingBehavior = SnapToMinuteIntervals() {
         didSet {
             eventEditingSnappingBehavior.calendar = calendar
         }
