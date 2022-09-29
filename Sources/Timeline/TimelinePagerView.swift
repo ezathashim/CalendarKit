@@ -535,6 +535,9 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             pendingEvent.frame.origin.y += diff.y
             prevOffset = newCoord
             accentDateForEditedEventView()
+            if let snappedInterval = snappedDateIntervalForEditedEventView() {
+                editedEvent?.dateInterval = snappedInterval
+            }
         }
         
         if sender.state == .ended {
@@ -792,6 +795,49 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             let end = timeline.yToDate(endY)
             descriptor.dateInterval = DateInterval(start: beginning, end: end)
         }
+    }
+    
+    
+    private func snappedDateIntervalForEditedEventView() -> DateInterval? {
+        
+        if let currentTimeline = currentTimeline {
+            let timeline = currentTimeline.timeline
+            if let editedEventView = editedEventView,
+               let descriptor = editedEventView.descriptor {
+                let ytd = yToDate(y: editedEventView.frame.origin.y,
+                                  timeline: timeline)
+                let snapped = timeline.eventEditingSnappingBehavior.nearestDate(to: ytd)
+                let leftToRight = UIView.userInterfaceLayoutDirection(for: semanticContentAttribute) == .leftToRight
+                let x = leftToRight ? style.leadingInset : 0
+                
+                let colIndex = timeline.columnIndexFor(descriptor: editedEventView.descriptor!)
+                let colCorrectionX = editedEventView.frame.width * CGFloat(colIndex) - currentTimeline.container.contentOffset.x
+                
+                var eventFrame = editedEventView.frame
+                eventFrame.origin.x = colCorrectionX + x
+                eventFrame.origin.y = timeline.dateToY(snapped) - currentTimeline.container.contentOffset.y
+                
+                if resizeHandleTag == 0 {
+                    eventFrame.size.height = timeline.dateToY(descriptor.dateInterval.end) - timeline.dateToY(snapped)
+                } else if resizeHandleTag == 1 {
+                    let bottomHandleYTD = yToDate(y: editedEventView.frame.origin.y + editedEventView.frame.size.height,
+                                                  timeline: timeline)
+                    let bottomHandleSnappedDate = timeline.eventEditingSnappingBehavior.nearestDate(to: bottomHandleYTD)
+                    eventFrame.size.height = timeline.dateToY(bottomHandleSnappedDate) - timeline.dateToY(snapped)
+                }
+                
+                let converted = convert(eventFrame, to: timeline)
+                let beginningY = converted.minY
+                let endY = converted.maxY
+                let beginning = timeline.yToDate(beginningY)
+                let end = timeline.yToDate(endY)
+                
+                return DateInterval(start: beginning, end: end)
+                
+            }
+        }
+        
+        return nil
     }
     
         // MARK: DayViewStateUpdating
