@@ -689,14 +689,9 @@ import UIKit
                     
                     let overlayBackgroundRect = overlayDrawRect.insetBy(dx: -8, dy: -8)
                     let backgroundPath = UIBezierPath(roundedRect: overlayBackgroundRect, cornerRadius: 10)
-                    let overlayBackgroundColor = UIColor.systemYellow.withAlphaComponent(0.9)
+                    let overlayBackgroundColor = UIColor.black.withAlphaComponent(0.7)
                     
                     context.saveGState()
-                    
-                    context.setStrokeColor(UIColor.systemYellow.cgColor)
-                    backgroundPath.lineWidth = 4
-                    backgroundPath.stroke()
-                    
                     
                     context.setFillColor(overlayBackgroundColor.cgColor)
                     backgroundPath.fill()
