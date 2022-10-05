@@ -692,7 +692,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             let timeline = currentTimeline.timeline
             let converted = timeline.convert(CGPoint.zero, from: editedEventView)
             var date = timeline.yToDate(converted.y + eventHeight)
-            date = timeline.eventEditingSnappingBehavior.roundedDateToNearest5Minutes(date)
+            date = timeline.eventEditingSnappingBehavior.roundedDateToNearestMinutes(date, minutes: 5)
             timeline.accentedDate = date
             timeline.setNeedsDisplay()
             

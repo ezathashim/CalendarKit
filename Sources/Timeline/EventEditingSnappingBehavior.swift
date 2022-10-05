@@ -5,5 +5,5 @@ public protocol EventEditingSnappingBehavior {
   func nearestDate(to date: Date) -> Date
   func accentedHour(for date: Date) -> Int
   func accentedMinute(for date: Date) -> Int
-  func roundedDateToNearest5Minutes(_ date: Date) -> Date
+  func roundedDateToNearestMinutes(_ date: Date, minutes: NSInteger) -> Date
 }
