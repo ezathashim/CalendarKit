@@ -506,7 +506,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             }
         }
         editedEventView = eventView
-        _ = accentDateForEditedEventView()
+        accentDateForEditedEventView()
     }
     
         /// Puts timeline in the editing mode and highlights a single event as being edited.
@@ -534,12 +534,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
                 //pendingEvent.frame.origin.x += diff.x
             pendingEvent.frame.origin.y += diff.y
             prevOffset = newCoord
-            if let date = accentDateForEditedEventView(){
-                if let currentEventInterval = editedEvent?.dateInterval {
-                    let snappedInterval = DateInterval(start: date, duration: currentEventInterval.duration)
-                    editedEvent?.dateInterval = snappedInterval
-                }
-            }
+            accentDateForEditedEventView()
         }
         
         if sender.state == .ended {
@@ -683,7 +678,7 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
             if suggestedEventHeight > minimumEventHeight {
                 pendingEvent.frame = suggestedEventFrame
                 prevOffset = newCoord
-                _ = accentDateForEditedEventView(eventHeight: tag == 0 ? 0 : suggestedEventHeight)
+                accentDateForEditedEventView(eventHeight: tag == 0 ? 0 : suggestedEventHeight)
             }
         }
         
@@ -692,19 +687,21 @@ public final class TimelinePagerView: UIView, UIGestureRecognizerDelegate, UIScr
         }
     }
     
-    private func accentDateForEditedEventView(eventHeight: CGFloat = 0) -> Date? {
+    private func accentDateForEditedEventView(eventHeight: CGFloat = 0) {
         if let currentTimeline = currentTimeline {
             let timeline = currentTimeline.timeline
             let converted = timeline.convert(CGPoint.zero, from: editedEventView)
-            let date = timeline.yToDate(converted.y + eventHeight)
-            let rounded = timeline.eventEditingSnappingBehavior.roundedDateToNearest5Minutes(date)
-            timeline.accentedDate = rounded
+            var date = timeline.yToDate(converted.y + eventHeight)
+            date = timeline.eventEditingSnappingBehavior.roundedDateToNearest5Minutes(date)
+            timeline.accentedDate = date
             timeline.setNeedsDisplay()
             
-            return rounded
+            if let eventInterval = editedEvent?.dateInterval {
+                let snappedInterval = DateInterval(start: date, duration: eventInterval.duration)
+                editedEvent?.dateInterval = snappedInterval
+            }
         }
         
-        return nil
     }
     
     private func commitEditing() {
