@@ -39,17 +39,21 @@ import UIKit
     view = dayView
   }
 
-  override open func viewDidLoad() {
-    super.viewDidLoad()
-    edgesForExtendedLayout = []
-    view.tintColor = SystemColors.systemRed
-    dataSource = self
-    delegate = self
-    dayView.reloadData(completionHandler: nil)
-
-    let sizeClass = traitCollection.horizontalSizeClass
-    configureDayViewLayoutForHorizontalSizeClass(sizeClass)
-  }
+    override open func viewDidLoad() {
+        super.viewDidLoad()
+        edgesForExtendedLayout = []
+        view.tintColor = SystemColors.systemRed
+        if dataSource == nil {
+            dataSource = self
+        }
+        if delegate == nil {
+            delegate = self
+        }
+        dayView.reloadData(completionHandler: nil)
+        
+        let sizeClass = traitCollection.horizontalSizeClass
+        configureDayViewLayoutForHorizontalSizeClass(sizeClass)
+    }
 
   open override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
