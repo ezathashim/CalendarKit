@@ -125,7 +125,11 @@ import UIKit
       let endOfToday = Date(timeInterval: 86399, since: startOfToday)
         
       let allDayInterval = NSDateInterval.init(start: startOfToday, end: endOfToday)
-        
+      if let _ = delegate {
+          if delegate === self {
+              return allDayInterval
+          }
+      }
       return delegate?.openIntervalForDate( date) ?? allDayInterval
   }
   
