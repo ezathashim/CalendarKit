@@ -885,7 +885,11 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         NSDateInterval.init(start: startOfToday, end: endOfToday)
         
         
-        return NSDateInterval.init(start: startOfToday, end: openInterval.startDate)
+            // make sure start is before end
+            // if start same as end, then NSDateInterval becomes zero
+        let endValue = openInterval.startDate > startOfToday ? openInterval.startDate : endOfToday
+        
+        return NSDateInterval.init(start: startOfToday, end: endValue)
     }
     
     private func closedEndInterval() -> NSDateInterval {
@@ -896,8 +900,11 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         let openInterval = delegate?.openIntervalForDate(date) ??
         NSDateInterval.init(start: startOfToday, end: endOfToday)
         
+            // make sure start is before end
+            // if start same as end, then NSDateInterval becomes zero
+        let startValue = openInterval.endDate < endOfToday ? openInterval.endDate : startOfToday
         
-        return NSDateInterval.init(start: openInterval.endDate, end: endOfToday)
+        return NSDateInterval.init(start: startValue, end: endOfToday)
     }
     
     
