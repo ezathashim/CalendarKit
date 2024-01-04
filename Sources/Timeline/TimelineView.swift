@@ -902,7 +902,7 @@ public final class TimelineView: UIView, UIContextMenuInteractionDelegate {
         
             // make sure start is before end
             // if start same as end, then NSDateInterval becomes zero
-        let startValue = openInterval.endDate < endOfToday ? openInterval.endDate : startOfToday
+        let startValue = openInterval.endDate > endOfToday ? startOfToday : openInterval.endDate
         
         return NSDateInterval.init(start: startValue, end: endOfToday)
     }
